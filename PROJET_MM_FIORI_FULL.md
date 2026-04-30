@@ -4,32 +4,30 @@ Ce document complète le projet en expliquant exactement **où cliquer** pour in
 ---
 
 ## 1. Comment trouver le "Business Object" (BO) ?
-Si vous ne voyez pas le BO après avoir activé la CDS View :
-1.  **Astuce Rapide** : Utilisez le raccourci clavier `Ctrl + Shift + A`.
-2.  Tapez le nom de votre CDS : `Z_I_PurchReq`.
-3.  Dans la liste des résultats, cherchez l'icône qui ressemble à un petit cube bleu/gris nommé **Business Object** `Z_I_PURCHREQ`.
-4.  **Si vous utilisez l'explorateur (Project Explorer)** :
-    - Déroulez votre projet ABAP.
-    - Cherchez le dossier **Core Data Services** > **Business Object Content**.
-    - Il est là ! S'il n'y est pas, c'est que votre CDS View n'a pas été activée avec l'annotation `@ObjectModel.modelCategory: #BUSINESS_OBJECT`.
+Si vous avez bien mis l'annotation `@ObjectModel.modelCategory: #BUSINESS_OBJECT` et activé votre CDS, mais que vous ne voyez rien :
+
+1.  **Le Réflexe "Rafraîchir"** : Cliquez sur votre projet dans l'explorateur à gauche et appuyez sur la touche **F5**. Eclipse a parfois besoin de cela pour afficher les nouveaux objets générés par SAP.
+2.  **Vérifiez la Perspective** : Assurez-vous d'être bien dans la perspective **ABAP** (icône en haut à droite d'Eclipse).
+3.  **Utilisez la recherche (Le plus sûr)** :
+    - Appuyez sur `Ctrl + Shift + A`.
+    - Tapez `Z_I_PURCHREQ`.
+    - Vous devez voir un objet avec une icône de cube bleu nommé **Business Object** (et non pas la Data Definition).
+4.  **En cas d'échec** : Regardez l'onglet **Problems** en bas d'Eclipse. Si l'activation de la CDS a échoué (erreur rouge), le BO ne sera jamais créé.
 
 ---
 
 ## 2. Intégration de la Validation (Quantité > 0)
 **Fichier source : `PROJET_MM_COMPLET/BOPF/CL_VAL_CHECK_QTY.abap`**
 
-1.  Ouvrez le BO `Z_I_PURCHREQ` (voir étape 1).
-2.  Dans l'onglet **Nodes** (en bas de l'écran central) :
-    - Déroulez l'arborescence jusqu'à **ROOT**.
-    - Faites un clic droit sur le dossier **Validations** > **New Validation**.
-3.  Dans la fenêtre :
-    - **Name** : `CHECK_QTY`
-    - **Implementation Class** : `ZCL_VAL_CHECK_QTY`.
-4.  Cliquez sur le lien bleu **Class ZCL_VAL_CHECK_QTY** pour générer le code ABAP.
-    - Copiez le contenu du fichier `CL_VAL_CHECK_QTY.abap`.
-    - **Activez** (Ctrl+F3).
-5.  Revenez sur le BO, onglet **Validation Check Options** : Cochez **Create** et **Update**.
-6.  **Activez le BO** (bouton en haut à gauche ou Ctrl+F3).
+1.  Ouvrez le BO `Z_I_PURCHREQ`.
+2.  Dans l'onglet **Nodes** (bas de l'écran central) :
+    - Déroulez **ROOT**.
+    - Clic droit sur **Validations** > **New Validation**.
+3.  **Name** : `CHECK_QTY`
+4.  **Implementation Class** : `ZCL_VAL_CHECK_QTY`.
+5.  Cliquez sur le lien bleu pour générer la classe, collez le code et **Activez** (Ctrl+F3).
+6.  Sur le BO, onglet **Validation Check Options** : Cochez **Create** et **Update**.
+7.  **Activez le BO** (bouton avec l'icône de petite flamme/éclair).
 
 ---
 
@@ -40,28 +38,29 @@ Si vous ne voyez pas le BO après avoir activé la CDS View :
 2.  Clic droit sur **Actions** > **New Action**.
 3.  **Name** : `APPROVE_PR`.
 4.  **Implementation Class** : `ZCL_ACT_APPROVE_PR`.
-5.  Créez la classe via le lien bleu, collez le code et activez.
+5.  Créez la classe, collez le code et activez.
 6.  **Activez le BO**.
 
 ---
 
-## 4. Comment lancer la "Fiori App Preview" ?
-Si le "Open With > SAP Fiori Elements App Preview" n'apparaît pas au clic droit sur la CDS :
-1.  **Vérifiez l'activation OData** : Avez-vous bien mis l'annotation `@OData.publish: true` dans `Z_I_PurchReq` ?
-2.  **L'icône jaune** : Une fois activée, une petite icône jaune (attention) apparaît à côté du mot `define view`. Passez la souris dessus, elle dira "Service Service Z_I_PURCHREQ_CDS is not registered".
-3.  **Alternative pour tester** :
-    - Allez dans la transaction `/n/IWFND/MAINT_SERVICE` dans SAP GUI.
-    - Cherchez votre service `Z_I_PURCHREQ_CDS`.
-    - Cliquez sur **SAP Gateway Client**.
-    - Cliquez sur **Execute**. Si vous recevez un XML, le service fonctionne !
-4.  **Dans Eclipse** : Essayez de faire un clic droit **non pas sur le texte**, mais sur le **nom du fichier** `Z_I_PurchReq.cds` dans le Project Explorer à gauche > **Open With** > **SAP Fiori Elements App Preview**.
+## 4. Pourquoi "SAP Fiori Elements App Preview" est absent ?
+Si vous ne voyez pas cette option au clic droit sur le fichier `.cds` :
+
+1.  **C'est normal si le service n'est pas "enregistré"** : L'option n'apparaît que si Eclipse détecte que le service OData est actif.
+2.  **Solution** : Allez dans la transaction `/n/IWFND/MAINT_SERVICE` (SAP GUI).
+    - Trouvez `Z_I_PURCHREQ_CDS`.
+    - S'il n'y est pas, ajoutez-le.
+    - S'il y est, cliquez sur **Load Metadata**.
+3.  **Testez sans Eclipse** :
+    - Dans la transaction `/n/IWFND/MAINT_SERVICE`, cliquez sur le bouton **SAP Gateway Client**.
+    - Cliquez sur **EntitySets**. Choisissez votre vue.
+    - Cliquez sur **Execute**. Si vous voyez vos données en format XML/JSON, le service est prêt pour Fiori.
 
 ---
 
 ## 5. Création de la Vue Analytique
 **Fichier source : `PROJET_MM_COMPLET/CDS/Z_C_PurchReqAnalytics.cds`**
 
-1.  Créez une nouvelle Data Definition nommée `Z_C_PurchReqAnalytics`.
-2.  Collez le code du fichier correspondant.
-3.  **Activez** (Ctrl+F3).
-4.  Pour voir les données : Clic droit sur le fichier > **Open With** > **Data Preview**.
+1.  Créez la Data Definition `Z_C_PurchReqAnalytics`.
+2.  Activez.
+3.  Clic droit sur le fichier dans l'explorateur > **Open With** > **Data Preview**. (C'est ici que vous verrez les colonnes de données avant qu'elles ne deviennent un graphique).
