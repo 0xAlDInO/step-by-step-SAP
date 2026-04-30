@@ -10,8 +10,9 @@ ENDCLASS.
 
 CLASS zcl_act_approve_pr IMPLEMENTATION.
   METHOD /bobf/if_frw_action~execute.
-    DATA lt_data TYPE TABLE OF zspurchreq_i.
+    DATA lt_data TYPE TABLE OF zspurchreq_i. " Structure de la vue CDS
 
+    " 1. Lire les données sélectionnées
     io_read->retrieve(
       EXPORTING
         iv_node = is_ctx-node_key
@@ -20,12 +21,14 @@ CLASS zcl_act_approve_pr IMPLEMENTATION.
         et_data = lt_data ).
 
     LOOP AT lt_data ASSIGNING FIELD-SYMBOL(<fs_data>).
-      <fs_data>-status = 'A'. " Approuvé
+      " 2. Modifier le statut
+      <fs_data>-status = 'A'. " A = Approuvé
 
+      " 3. Mettre à jour l'instance (Attention au nom de la clé : PRKey)
       io_modify->update(
         EXPORTING
           iv_node = is_ctx-node_key
-          iv_key  = <fs_data>-key
+          iv_key  = <fs_data>-prkey
           is_data = REF #( <fs_data> ) ).
     ENDLOOP.
   ENDMETHOD.
