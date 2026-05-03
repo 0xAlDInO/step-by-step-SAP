@@ -1,0 +1,21 @@
+@EndUserText.label: 'Draft table for ZI_PO_ITEM'
+@AbapCatalog.enhancementCategory: #EXTENSIBLE_ANY
+@AbapCatalog.tableCategory: #TRANSPARENT
+@AbapCatalog.deliveryClass: #A
+@AbapCatalog.dataMaintenance: #RESTRICTED
+define table zpo_item_d {
+  key mandt         : mandt not null;
+  key purchaseorder : ebeln not null;
+  key purchaseorderitem : ebelp not null;
+  material          : matnr;
+  plant             : werks;
+  @Semantics.quantity.unitOfMeasure: 'zpo_item_d.purchaseorderquantityunit'
+  purchaseorderquantity : menge;
+  purchaseorderquantityunit : meins;
+  @Semantics.amount.currencyCode: 'zpo_item_d.currency'
+  netprice          : netpr;
+  currency          : waers;
+  purchaseorderitemtext : txz01;
+  deletionindicator : loekz;
+  "%admin"          : include sych_bdl_draft_admin_inc;
+}
