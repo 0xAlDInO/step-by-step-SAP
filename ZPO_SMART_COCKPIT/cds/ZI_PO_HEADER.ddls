@@ -1,0 +1,25 @@
+@AbapCatalog.sqlViewName: 'ZV_PO_HEADER'
+@AbapCatalog.compiler.compareFilter: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Interface View Purchase Order Header'
+@ObjectModel.modelCategory: #BUSINESS_OBJECT
+@ObjectModel.dataCategory: #MASTERDATA
+@ObjectModel.semanticKey: ['EBELN']
+@ObjectModel.compositionRoot: true
+define view ZI_PO_HEADER as select from ekko
+{
+  key ebeln,
+  bukrs,
+  lifnr,
+  bsart,
+  bedat,
+  waers,
+  netwr,
+  ernam,
+  erdat,
+  aedat,
+  loekz,
+
+  @ObjectModel.association.type: [ #TO_COMPOSITION_CHILD ]
+  association [0..*] to ZI_PO_ITEM as _Items on $projection.EBELN = _Items.EBELN
+}

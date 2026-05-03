@@ -1,0 +1,4 @@
+service ZUI_PO {
+  expose ZC_PO_LIST as POList;
+  expose ZC_PO_DETAIL as PODetail;
+}

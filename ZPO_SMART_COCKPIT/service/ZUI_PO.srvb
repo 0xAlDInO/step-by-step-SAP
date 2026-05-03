@@ -1,0 +1,4 @@
+service ZUI_PO alias ZUI_PO_SRV {
+  bind with OData V4
+    at client '100';
+}

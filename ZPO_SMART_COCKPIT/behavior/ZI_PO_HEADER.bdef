@@ -1,0 +1,19 @@
+behavior for ZI_PO_HEADER alias PurchaseOrder
+implementation in class ZBP_I_PO unique
+persistent table ekko
+{
+  create;
+  update;
+  delete;
+
+  field (readonly) EBELN;
+  field BUKRS;
+  field LIFNR;
+  field BSART;
+  field BEDAT;
+  field WAERS;
+  field NETWR;
+  field AEDAT;
+
+  association POItems to ZI_PO_ITEM on $self.EBELN = POItems.EBELN;
+}

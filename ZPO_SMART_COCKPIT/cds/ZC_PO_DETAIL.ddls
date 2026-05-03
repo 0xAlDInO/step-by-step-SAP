@@ -1,0 +1,31 @@
+@AbapCatalog.sqlViewName: 'ZV_C_PO_DETAIL'
+@AbapCatalog.compiler.compareFilter: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Purchase Order Detail'
+@UI.headerInfo: { typeName: 'Purchase Order', typeNamePlural: 'Purchase Orders' }
+define view ZC_PO_DETAIL as select from ZI_PO_HEADER
+{
+  @UI.identification: [ { position: 10 } ]
+  key EBELN,
+
+  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
+  BUKRS,
+
+  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
+  LIFNR,
+
+  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
+  BSART,
+
+  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
+  WAERS,
+
+  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
+  NETWR,
+
+  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
+  AEDAT,
+
+  @UI.facet: [ { id: 'Items', type: #COLLECTION_REFERENCE, label: 'PO Items' } ]
+  association [0..*] to ZI_PO_ITEM as _Items on $projection.EBELN = _Items.EBELN
+}
