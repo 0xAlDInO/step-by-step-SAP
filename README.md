@@ -116,7 +116,6 @@ Ordre recommandé :
 
 ```json
 {
-  "EBELN": "0000001234",
   "BUKRS": "1000",
   "LIFNR": "0000123456",
   "BSART": "NB",
