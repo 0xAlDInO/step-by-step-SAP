@@ -1,4 +1,5 @@
-service ZUI_PO {
-  expose ZC_PO_LIST as POList;
-  expose ZC_PO_DETAIL as PODetail;
+@EndUserText.label: 'Service Definition for Purchase Order'
+define service ZUI_PO {
+  expose ZC_PO_LIST as PurchaseOrder;
+  expose ZC_PO_DETAIL as PurchaseOrderItem;
 }

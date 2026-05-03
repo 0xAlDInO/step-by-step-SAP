@@ -1,29 +1,50 @@
-@AbapCatalog.sqlViewName: 'ZV_C_PO_LIST'
-@AbapCatalog.compiler.compareFilter: true
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'Purchase Order List'
-@UI.headerInfo: { typeName: 'Purchase Order', typeNamePlural: 'Purchase Orders' }
-define view ZC_PO_LIST as select from ZI_PO_HEADER
+@UI.headerInfo: { typeName: 'Purchase Order', typeNamePlural: 'Purchase Orders', title: { type: #STANDARD, value: 'PurchaseOrder' } }
+@Search.searchable: true
+
+define root view entity ZC_PO_LIST
+  provider contract transactional_query
+  as projection on ZI_PO_HEADER
 {
-  @UI.identification: [ { position: 10 } ]
-  @UI.lineItem: [ { position: 10 } ]
-  key EBELN,
+      @UI.facet: [
+        { id: 'GeneralInfo', type: #IDENTIFICATION_REFERENCE, label: 'General Information', position: 10 }
+      ]
 
-  @UI.lineItem: [ { position: 20 } ]
-  BUKRS,
+      @UI.lineItem: [ { position: 10 } ]
+      @UI.identification: [ { position: 10 } ]
+      @Search.defaultSearchElement: true
+  key PurchaseOrder,
 
-  @UI.lineItem: [ { position: 30 } ]
-  LIFNR,
+      @UI.lineItem: [ { position: 20 } ]
+      @UI.identification: [ { position: 20 } ]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_CompanyCode', element: 'CompanyCode' } }]
+      CompanyCode,
 
-  @UI.lineItem: [ { position: 40 } ]
-  BSART,
+      @UI.lineItem: [ { position: 30 } ]
+      @UI.identification: [ { position: 30 } ]
+      Supplier,
 
-  @UI.lineItem: [ { position: 50 } ]
-  WAERS,
+      @UI.lineItem: [ { position: 40 } ]
+      @UI.identification: [ { position: 40 } ]
+      PurchaseOrderType,
 
-  @UI.lineItem: [ { position: 60 } ]
-  NETWR,
+      @UI.lineItem: [ { position: 50 } ]
+      @UI.identification: [ { position: 50 } ]
+      PurchaseOrderDate,
 
-  @UI.lineItem: [ { position: 70 } ]
-  AEDAT
+      @UI.lineItem: [ { position: 60 } ]
+      @UI.identification: [ { position: 60 } ]
+      Currency,
+
+      @UI.lineItem: [ { position: 70 } ]
+      @UI.identification: [ { position: 70 } ]
+      NetAmount,
+
+      @UI.lineItem: [ { position: 80 } ]
+      @UI.identification: [ { position: 80 } ]
+      LastChangeDate,
+
+      /* Associations */
+      _Items : redirected to composition child ZC_PO_DETAIL
 }

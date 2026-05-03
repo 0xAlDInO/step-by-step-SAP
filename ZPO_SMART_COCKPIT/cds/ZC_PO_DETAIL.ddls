@@ -1,31 +1,46 @@
-@AbapCatalog.sqlViewName: 'ZV_C_PO_DETAIL'
-@AbapCatalog.compiler.compareFilter: true
 @AccessControl.authorizationCheck: #NOT_REQUIRED
-@EndUserText.label: 'Purchase Order Detail'
-@UI.headerInfo: { typeName: 'Purchase Order', typeNamePlural: 'Purchase Orders' }
-define view ZC_PO_DETAIL as select from ZI_PO_HEADER
+@EndUserText.label: 'Purchase Order Item Detail'
+@UI.headerInfo: { typeName: 'Purchase Order Item', typeNamePlural: 'Purchase Order Items', title: { type: #STANDARD, value: 'PurchaseOrderItem' } }
+
+define view entity ZC_PO_DETAIL
+  as projection on ZI_PO_ITEM
 {
-  @UI.identification: [ { position: 10 } ]
-  key EBELN,
+      @UI.facet: [
+        { id: 'ItemGeneralInfo', type: #IDENTIFICATION_REFERENCE, label: 'Item Information', position: 10 }
+      ]
 
-  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
-  BUKRS,
+      @UI.lineItem: [ { position: 10 } ]
+      @UI.identification: [ { position: 10 } ]
+  key PurchaseOrder,
 
-  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
-  LIFNR,
+      @UI.lineItem: [ { position: 20 } ]
+      @UI.identification: [ { position: 20 } ]
+  key PurchaseOrderItem,
 
-  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
-  BSART,
+      @UI.lineItem: [ { position: 30 } ]
+      @UI.identification: [ { position: 30 } ]
+      Material,
 
-  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
-  WAERS,
+      @UI.lineItem: [ { position: 40 } ]
+      @UI.identification: [ { position: 40 } ]
+      Plant,
 
-  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
-  NETWR,
+      @UI.lineItem: [ { position: 50 } ]
+      @UI.identification: [ { position: 50 } ]
+      PurchaseOrderQuantity,
 
-  @UI.facet: [ { id: 'General', type: #IDENTIFICATION_REFERENCE } ]
-  AEDAT,
+      @UI.lineItem: [ { position: 60 } ]
+      @UI.identification: [ { position: 60 } ]
+      PurchaseOrderQuantityUnit,
 
-  @UI.facet: [ { id: 'Items', type: #COLLECTION_REFERENCE, label: 'PO Items' } ]
-  association [0..*] to ZI_PO_ITEM as _Items on $projection.EBELN = _Items.EBELN
+      @UI.lineItem: [ { position: 70 } ]
+      @UI.identification: [ { position: 70 } ]
+      NetPrice,
+
+      @UI.lineItem: [ { position: 80 } ]
+      @UI.identification: [ { position: 80 } ]
+      PurchaseOrderItemText,
+
+      /* Associations */
+      _Header : redirected to parent ZC_PO_LIST
 }

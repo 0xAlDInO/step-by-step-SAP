@@ -1,4 +1,7 @@
-service ZUI_PO alias ZUI_PO_SRV {
-  bind with OData V4
-    at client '100';
+@EndUserText.label: 'Service Binding for Purchase Order (OData V4)'
+define service binding ZUI_PO
+  type odatav4_ui
+{
+  expose ZC_PO_LIST as PurchaseOrder;
+  expose ZC_PO_DETAIL as PurchaseOrderItem;
 }

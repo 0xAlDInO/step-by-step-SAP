@@ -1,19 +1,59 @@
-behavior for ZI_PO_HEADER alias PurchaseOrder
-implementation in class ZBP_I_PO unique
-persistent table ekko
+unmanaged implementation in class ZBP_I_PO unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZI_PO_HEADER alias PurchaseOrder
+draft table zpo_header_d
+lock master
+total etag LastChangeDate
+authorization master ( instance )
 {
   create;
   update;
   delete;
 
-  field (readonly) EBELN;
-  field BUKRS;
-  field LIFNR;
-  field BSART;
-  field BEDAT;
-  field WAERS;
-  field NETWR;
-  field AEDAT;
+  field ( readonly ) PurchaseOrder;
+  field ( mandatory ) CompanyCode, Supplier, PurchaseOrderType;
 
-  association POItems to ZI_PO_ITEM on $self.EBELN = POItems.EBELN;
+  association _Items { create; with draft; }
+
+  mapping for ekko
+  {
+    PurchaseOrder = ebeln;
+    CompanyCode = bukrs;
+    Supplier = lifnr;
+    PurchaseOrderType = bsart;
+    PurchaseOrderDate = bedat;
+    Currency = waers;
+    NetAmount = netwr;
+    LastChangeDate = aedat;
+    DeletionIndicator = loekz;
+  }
+}
+
+define behavior for ZI_PO_ITEM alias PurchaseOrderItem
+draft table zpo_item_d
+lock dependency by _Header
+authorization dependent by _Header
+{
+  update;
+  delete;
+
+  field ( readonly ) PurchaseOrder, PurchaseOrderItem;
+  field ( mandatory ) Material, Plant, PurchaseOrderQuantity;
+
+  association _Header { with draft; }
+
+  mapping for ekpo
+  {
+    PurchaseOrder = ebeln;
+    PurchaseOrderItem = ebelp;
+    Material = matnr;
+    Plant = werks;
+    PurchaseOrderQuantity = menge;
+    PurchaseOrderQuantityUnit = meins;
+    NetPrice = netpr;
+    PurchaseOrderItemText = txz01;
+    DeletionIndicator = loekz;
+  }
 }
