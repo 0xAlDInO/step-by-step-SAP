@@ -28,8 +28,8 @@ CLASS lhc_purchaseorder DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrder.
     METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrder RESULT result.
     METHODS lock FOR LOCK IMPORTING keys FOR LOCK PurchaseOrder.
-    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_items FULL result_full REQUEST requested_fields RESULT result LINK link.
-    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_items.
+    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result_full REQUEST requested_fields RESULT result LINK link.
+    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
 ENDCLASS.
 
 CLASS lhc_purchaseorderitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
@@ -74,7 +74,17 @@ CLASS lhc_purchaseorder IMPLEMENTATION.
   METHOD read.
     IF keys IS NOT INITIAL.
       SELECT * FROM ekko FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder INTO TABLE @DATA(lt_po).
-      result = CORRESPONDING #( lt_po MAPPING PurchaseOrder = ebeln ).
+      result = CORRESPONDING #( lt_po MAPPING
+        PurchaseOrder = ebeln
+        CompanyCode = bukrs
+        Supplier = lifnr
+        PurchaseOrderTypeCode = bsart
+        PurchasingOrganization = ekorg
+        PurchasingGroup = ekgrp
+        PurchaseOrderDate = bedat
+        Currency = waers
+        CreationDate = aedat
+        DeletionIndicator = loekz ).
     ENDIF.
   ENDMETHOD.
 
@@ -84,12 +94,40 @@ CLASS lhc_purchaseorder IMPLEMENTATION.
         EXPORTING ebeln = ls_key-PurchaseOrder
         EXCEPTIONS foreign_lock = 1 system_failure = 2 OTHERS = 3.
       IF sy-subrc <> 0.
-        APPEND VALUE #( PurchaseOrder = ls_key-PurchaseOrder ) TO failed-purchaseorder.
+        APPEND VALUE #( %tky = ls_key-%tky ) TO failed-purchaseorder.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
 
-  METHOD rba_items. ENDMETHOD.
+  METHOD rba_items.
+    IF keys_rba IS NOT INITIAL.
+      SELECT * FROM ekpo FOR ALL ENTRIES IN @keys_rba
+        WHERE ebeln = @keys_rba-PurchaseOrder
+        INTO TABLE @DATA(lt_items).
+
+      LOOP AT keys_rba INTO DATA(ls_key).
+        LOOP AT lt_items INTO DATA(ls_item) WHERE ebeln = ls_key-PurchaseOrder.
+          APPEND VALUE #( %tky = ls_key-%tky
+                          %target = CORRESPONDING #( ls_item MAPPING
+                            PurchaseOrder = ebeln
+                            PurchaseOrderItem = ebelp
+                            Material = matnr
+                            Plant = werks
+                            PurchaseOrderQuantity = menge
+                            PurchaseOrderQuantityUnit = meins
+                            NetPrice = netpr
+                            PurchaseOrderItemText = txz01
+                            DeletionIndicator = loekz ) ) TO result.
+          IF link IS SUPPLIED.
+            APPEND VALUE #( %tky = ls_key-%tky
+                            source-PurchaseOrder = ls_key-PurchaseOrder
+                            target-PurchaseOrder = ls_item-ebeln
+                            target-PurchaseOrderItem = ls_item-ebelp ) TO link.
+          ENDIF.
+        ENDLOOP.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
 
   METHOD cba_items.
     LOOP AT entities_cba INTO DATA(ls_cba).
@@ -112,7 +150,16 @@ CLASS lhc_purchaseorderitem IMPLEMENTATION.
   METHOD read.
     IF keys IS NOT INITIAL.
       SELECT * FROM ekpo FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder AND ebelp = @keys-PurchaseOrderItem INTO TABLE @DATA(lt_item).
-      result = CORRESPONDING #( lt_item MAPPING PurchaseOrder = ebeln PurchaseOrderItem = ebelp ).
+      result = CORRESPONDING #( lt_item MAPPING
+        PurchaseOrder = ebeln
+        PurchaseOrderItem = ebelp
+        Material = matnr
+        Plant = werks
+        PurchaseOrderQuantity = menge
+        PurchaseOrderQuantityUnit = meins
+        NetPrice = netpr
+        PurchaseOrderItemText = txz01
+        DeletionIndicator = loekz ).
     ENDIF.
   ENDMETHOD.
 ENDCLASS.
@@ -161,9 +208,14 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
       IF lv_po IS NOT INITIAL.
         APPEND VALUE #( %cid = ls_buffer-cid PurchaseOrder = lv_po ) TO mapped-purchaseorder.
       ENDIF.
+
       LOOP AT lt_return INTO DATA(ls_ret) WHERE type CA 'AEX'.
         APPEND VALUE #( %msg = cl_abap_behv=>new_message_from_bapi( is_bapiret2 = ls_ret ) ) TO reported-purchaseorder.
-        APPEND VALUE #( PurchaseOrder = COND #( WHEN lv_po IS NOT INITIAL THEN lv_po ELSE ls_buffer-header-PurchaseOrder ) ) TO failed-purchaseorder.
+        IF ls_buffer-cid IS NOT INITIAL.
+           APPEND VALUE #( %cid = ls_buffer-cid ) TO failed-purchaseorder.
+        ELSE.
+           APPEND VALUE #( PurchaseOrder = ls_buffer-header-PurchaseOrder ) TO failed-purchaseorder.
+        ENDIF.
       ENDLOOP.
     ENDLOOP.
     CLEAR lcl_buffer=>mt_buffer.

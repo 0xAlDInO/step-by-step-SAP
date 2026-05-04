@@ -86,4 +86,5 @@ Après chaque test, il est impératif de vérifier que les données sont correct
 ## 4. Vérification Technique
 
 *   **Table Draft** : Si vous utilisez le mode Draft, vous pouvez vérifier le contenu des tables `zpo_header_d` et `zpo_item_d` pendant l'édition.
+*   **Analyse des Dumps (ST22)** : Si vous rencontrez une erreur de type "RAISE_SHORTDUMP", vérifiez la transaction **ST22**. Une cause fréquente est l'absence d'implémentation de la méthode `READ` ou `RBA` (Read By Association) dans le Behavior Pool lors de la navigation vers l'Object Page.
 *   **Logs BAPI** : Si une erreur survient, les messages retournés par le BAPI sont propagés dans la structure `REPORTED`. Dans l'UI Fiori, ils apparaissent dans la pop-up de message.
