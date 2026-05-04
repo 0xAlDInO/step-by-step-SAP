@@ -1,34 +1,31 @@
 # Audit & Refactoring Report - ZPO_SMART_COCKPIT
 
 ## 1. Executive Summary
-The `ZPO_SMART_COCKPIT` repository has been fully refactored from a legacy ABAP/ECC approach to a modern **SAP S/4HANA RESTful ABAP Programming (RAP)** architecture. The solution now leverages OData V4, CDS View Entities, and a robust Unmanaged scenario for BAPI integration with Draft support.
+The `ZPO_SMART_COCKPIT` repository has been fully refactored to comply with modern **SAP S/4HANA RESTful ABAP Programming (RAP)** best practices. The solution addresses legacy technical errors and architectural shortcomings identified during the audit.
 
-## 2. Key Improvements
+## 2. Critical Corrections
 
-### 2.1 CDS Layer
-- **Refactoring**: Converted legacy `DEFINE VIEW` to modern `DEFINE VIEW ENTITY`.
-- **Naming**: Aliased technical fields (e.g., `ebeln`) to business-friendly names (`PurchaseOrder`) following S/4HANA standards.
-- **Semantics**: Added proper quantity and currency annotations.
-- **UI**: Integrated modern `@UI` annotations for List Report and Object Page.
+### 2.1 Dictionary Consistency (SAP Standard)
+- **Problem**: The initial code referenced `NETWR` and `ERDAT` in the `EKKO` table.
+- **Correction**: These fields do not exist in standard `EKKO`. `NETWR` was removed, and `ERDAT` was replaced by `AEDAT` (Date on which the record was created/changed).
+- **Impact**: Resolved "Unknown Column" errors during CDS activation.
 
-### 2.2 Behavior & Orchestration
-- **Scenario**: Implemented a **Fully Unmanaged Scenario** to safely wrap `BAPI_PO_CREATE1` and `BAPI_PO_CHANGE`.
-- **Draft Support**: Enabled Draft capability with the required persistent draft tables (`zpo_header_d`, `zpo_item_d`).
-- **Transactional Buffer**: Introduced a local buffer class (`lcl_buffer`) in the Behavior Pool to manage state and support hierarchical creation (Header + Items).
-- **Wiring**: Fully implemented mandatory Unmanaged methods: `READ`, `LOCK`, and `%cid` mapping in the `SAVE` phase.
+### 2.2 CDS Activation (Circular Dependencies)
+- **Problem**: Circular dependencies between Header and Item views blocked activation.
+- **Correction**: Refactored `ZI_PO_ITEM` to use a direct JOIN on `EKKO` for currency fields, breaking the select-list dependency on the Header view.
+- **Guidance**: Documented the "Mass Activation" procedure required in ADT.
 
-### 2.3 ABAP & BAPI Integration
-- **Structures**: Replaced legacy `BAPIEKKO`/`BAPIEKPO` with S/4HANA recommended `BAPIMEPO*` structures.
-- **X-Structures**: Correctly implemented X-structure population to ensure data persistence in S/4HANA BAPIs.
-- **Soft Delete**: Implemented business-compliant deletion by setting the deletion indicator via BAPI instead of physical record removal.
-- **LUW Integrity**: Removed manual `COMMIT WORK` and `BAPI_TRANSACTION_COMMIT` to adhere to the RAP Logical Unit of Work managed by the framework.
+### 2.3 ABAP Behavior Pool Structure
+- **Problem**: Incorrect ordering of global and local classes caused compiler errors.
+- **Correction**: Reorganized `ZBP_I_PO.abap` to define and implement classes in the order required by the ABAP compiler for single-file Behavior Pools.
 
-### 2.4 Error Handling
-- **Integration**: Replaced disruptive `MESSAGE TYPE 'E'` with structured RAP `FAILED` and `REPORTED` mechanisms.
-- **Feedback**: Used `cl_abap_behv=>new_message_from_bapi` to provide rich, field-level feedback to the Fiori UI.
+## 3. Improvements
 
-## 3. Deliverables
-- **Refactored CDS**: `ZI_PO_HEADER`, `ZI_PO_ITEM`, `ZC_PO_LIST`, `ZC_PO_DETAIL`.
-- **RAP Behavior**: `ZI_PO_HEADER.bdef` and consolidated Behavior Pool `ZBP_I_PO.abap`.
-- **Service Binding**: OData V4 UI service `ZUI_PO`.
-- **DDIC**: Draft table definitions for Header and Items.
+### 3.1 Architectural Modernization
+- **Scenario**: Fully Unmanaged RAP Scenario with Draft support.
+- **BAPI Integration**: Correct usage of `BAPIMEPO*` structures and mandatory fields (`PURCH_ORG`, `PUR_GROUP`).
+- **Soft Delete**: Implemented deletion via deletion indicator (`LOEKZ`) instead of physical record removal.
+
+### 3.2 UI & UX
+- **Naming**: Aliased technical fields to business-friendly terms.
+- **Error Handling**: Implemented RAP-compliant `FAILED`/`REPORTED` feedback mechanisms.

@@ -5,7 +5,7 @@ with draft;
 define behavior for ZI_PO_HEADER alias PurchaseOrder
 draft table zpo_header_d
 lock master
-total etag LastChangeDate
+total etag CreationDate
 authorization master ( instance )
 {
   create;
@@ -23,10 +23,11 @@ authorization master ( instance )
     CompanyCode = bukrs;
     Supplier = lifnr;
     PurchaseOrderType = bsart;
+    PurchasingOrganization = ekorg;
+    PurchasingGroup = ekgrp;
     PurchaseOrderDate = bedat;
     Currency = waers;
-    NetAmount = netwr;
-    LastChangeDate = aedat;
+    CreationDate = aedat;
     DeletionIndicator = loekz;
   }
 }

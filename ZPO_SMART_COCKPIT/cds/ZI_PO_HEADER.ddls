@@ -13,11 +13,8 @@ define root view entity ZI_PO_HEADER
       ekgrp as PurchasingGroup,
       bedat as PurchaseOrderDate,
       waers as Currency,
-      @Semantics.amount.currencyCode: 'Currency'
-      netwr as NetAmount,
       ernam as CreatedByUser,
-      erdat as CreationDate,
-      aedat as LastChangeDate,
+      aedat as CreationDate,
       loekz as DeletionIndicator,
 
       _Items

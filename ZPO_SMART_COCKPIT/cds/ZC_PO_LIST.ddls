@@ -45,13 +45,9 @@ define root view entity ZC_PO_LIST
       @UI.identification: [ { position: 60 } ]
       Currency,
 
-      @UI.lineItem: [ { position: 70 } ]
-      @UI.identification: [ { position: 70 } ]
-      NetAmount,
-
       @UI.lineItem: [ { position: 80 } ]
       @UI.identification: [ { position: 80 } ]
-      LastChangeDate,
+      CreationDate,
 
       /* Associations */
       _Items : redirected to composition child ZC_PO_DETAIL
