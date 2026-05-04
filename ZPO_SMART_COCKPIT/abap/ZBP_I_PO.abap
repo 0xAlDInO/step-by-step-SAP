@@ -22,14 +22,14 @@ ENDCLASS.
 CLASS lhc_purchaseorder DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
-      IMPORTING keys REQUEST requested_authorizations FOR PurchaseOrder RESULT result.
+      IMPORTING keys FOR PurchaseOrder RESULT result.
     METHODS create FOR MODIFY IMPORTING entities FOR CREATE PurchaseOrder.
     METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrder.
     METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrder.
     METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrder RESULT result.
     METHODS lock FOR LOCK IMPORTING keys FOR LOCK PurchaseOrder.
-    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\Items RESULT result LINK link.
-    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\Items.
+    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items RESULT result LINK link.
+    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
 ENDCLASS.
 
 CLASS lhc_purchaseorderitem DEFINITION INHERITING FROM cl_abap_behavior_handler.

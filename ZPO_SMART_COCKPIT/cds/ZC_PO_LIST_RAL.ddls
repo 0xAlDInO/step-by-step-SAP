@@ -32,5 +32,5 @@ define root view entity ZC_PO_LIST_RAL
       @UI.lineItem: [ { position: 80 } ]
       CreationDate,
 
-      Items : redirected to composition child ZC_PO_DETAIL_RAL
+      _Items : redirected to composition child ZC_PO_DETAIL_RAL
 }

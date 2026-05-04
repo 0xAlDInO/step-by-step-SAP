@@ -3,12 +3,12 @@
 
 define root view entity ZI_PO_HEADER_RAL
   as select from ekko
-  composition [0..*] of ZI_PO_ITEM_RAL as Items
+  composition [0..*] of ZI_PO_ITEM_RAL as _Items
 {
   key ebeln as PurchaseOrder,
       bukrs as CompanyCode,
       lifnr as Supplier,
-      bsart as PurchaseOrderTypeCode, -- Renommé pour éviter le conflit EDM
+      bsart as PurchaseOrderTypeCode,
       ekorg as PurchasingOrganization,
       ekgrp as PurchasingGroup,
       bedat as PurchaseOrderDate,
@@ -17,5 +17,5 @@ define root view entity ZI_PO_HEADER_RAL
       aedat as CreationDate,
       loekz as DeletionIndicator,
 
-      Items
+      _Items
 }
