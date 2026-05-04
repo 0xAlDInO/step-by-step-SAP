@@ -4,6 +4,7 @@
 define view entity ZI_PO_ITEM
   as select from ekpo
   association to parent ZI_PO_HEADER as _Header on $projection.PurchaseOrder = _Header.PurchaseOrder
+  association [1..1] to ekko as _EKKO on $projection.PurchaseOrder = _EKKO.ebeln
 {
   key ebeln as PurchaseOrder,
   key ebelp as PurchaseOrderItem,
@@ -14,7 +15,7 @@ define view entity ZI_PO_ITEM
       meins as PurchaseOrderQuantityUnit,
       @Semantics.amount.currencyCode: 'Currency'
       netpr as NetPrice,
-      _Header.Currency as Currency,
+      _EKKO.waers as Currency,
       txz01 as PurchaseOrderItemText,
       loekz as DeletionIndicator,
 
