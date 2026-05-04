@@ -1,9 +1,9 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
-@EndUserText.label: 'Interface View Purchase Order Item'
+@EndUserText.label: 'Interface View Purchase Order Item RAL'
 
-define view entity ZI_PO_ITEM
+define view entity ZI_PO_ITEM_RAL
   as select from ekpo
-  association to parent ZI_PO_HEADER as _Header on $projection.PurchaseOrder = _Header.PurchaseOrder
+  association to parent ZI_PO_HEADER_RAL as _Header on $projection.PurchaseOrder = _Header.PurchaseOrder
   association [1..1] to ekko as _EKKO on $projection.PurchaseOrder = _EKKO.ebeln
 {
   key ebeln as PurchaseOrder,

@@ -1,4 +1,4 @@
-CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header.
+CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header_ral.
 ENDCLASS.
 
 **********************************************************************
@@ -9,8 +9,8 @@ CLASS lcl_buffer DEFINITION.
   PUBLIC SECTION.
     TYPES: BEGIN OF ty_po_buffer,
              cid    TYPE abp_behv_cid,
-             header TYPE zi_po_header,
-             items  TYPE TABLE OF zi_po_item WITH EMPTY KEY,
+             header TYPE zi_po_header_ral,
+             items  TYPE TABLE OF zi_po_item_ral WITH EMPTY KEY,
              action TYPE char1, " C: Create, U: Update, D: Delete
            END OF ty_po_buffer.
 

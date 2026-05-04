@@ -2,7 +2,7 @@ unmanaged implementation in class ZBP_I_PO unique;
 strict ( 2 );
 with draft;
 
-define behavior for ZI_PO_HEADER alias PurchaseOrder
+define behavior for ZI_PO_HEADER_RAL alias PurchaseOrder
 draft table zpo_header_d
 lock master
 total etag CreationDate
@@ -32,7 +32,7 @@ authorization master ( instance )
   }
 }
 
-define behavior for ZI_PO_ITEM alias PurchaseOrderItem
+define behavior for ZI_PO_ITEM_RAL alias PurchaseOrderItem
 draft table zpo_item_d
 lock dependency by _Header
 authorization dependent by _Header

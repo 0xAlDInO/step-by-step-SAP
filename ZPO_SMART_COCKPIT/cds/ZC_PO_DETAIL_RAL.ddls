@@ -1,8 +1,8 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
-@EndUserText.label: 'Purchase Order Detail'
+@EndUserText.label: 'Purchase Order Detail RAL'
 
-define view entity ZC_PO_DETAIL
-  as projection on ZI_PO_ITEM
+define view entity ZC_PO_DETAIL_RAL
+  as projection on ZI_PO_ITEM_RAL
 {
       @UI.facet: [ { id: 'ItemInfo', type: #IDENTIFICATION_REFERENCE, label: 'Item Information', position: 10 } ]
 
@@ -32,6 +32,5 @@ define view entity ZC_PO_DETAIL
       @UI.lineItem: [ { position: 80 } ]
       PurchaseOrderItemText,
 
-      /* Associations */
-      _Header : redirected to parent ZC_PO_LIST
+      _Header : redirected to parent ZC_PO_LIST_RAL
 }
