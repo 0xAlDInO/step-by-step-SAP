@@ -1,7 +1,4 @@
 CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header_ral.
-  PUBLIC SECTION.
-  PROTECTED SECTION.
-  PRIVATE SECTION.
 ENDCLASS.
 
 **********************************************************************
