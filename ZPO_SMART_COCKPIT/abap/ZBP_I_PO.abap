@@ -1,11 +1,8 @@
 CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header.
 ENDCLASS.
 
-CLASS zbp_i_po IMPLEMENTATION.
-ENDCLASS.
-
 **********************************************************************
-* LOCAL CLASSES DEFINITION & IMPLEMENTATION
+* LOCAL TYPES
 **********************************************************************
 
 CLASS lcl_buffer DEFINITION.
@@ -47,6 +44,29 @@ CLASS lhc_PurchaseOrder DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
 
 ENDCLASS.
+
+CLASS lhc_PurchaseOrderItem DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+    METHODS update FOR MODIFY
+      IMPORTING entities FOR UPDATE PurchaseOrderItem.
+
+    METHODS delete FOR MODIFY
+      IMPORTING keys FOR DELETE PurchaseOrderItem.
+
+    METHODS read FOR READ
+      IMPORTING keys FOR READ PurchaseOrderItem RESULT result.
+ENDCLASS.
+
+CLASS lsc_zi_po_header DEFINITION INHERITING FROM cl_abap_behavior_saver.
+  PROTECTED SECTION.
+    METHODS save REDEFINITION.
+    METHODS finalize REDEFINITION.
+    METHODS check_before_save REDEFINITION.
+ENDCLASS.
+
+**********************************************************************
+* LOCAL IMPLEMENTATIONS
+**********************************************************************
 
 CLASS lhc_PurchaseOrder IMPLEMENTATION.
 
@@ -113,18 +133,6 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
 
 ENDCLASS.
 
-CLASS lhc_PurchaseOrderItem DEFINITION INHERITING FROM cl_abap_behavior_handler.
-  PRIVATE SECTION.
-    METHODS update FOR MODIFY
-      IMPORTING entities FOR UPDATE PurchaseOrderItem.
-
-    METHODS delete FOR MODIFY
-      IMPORTING keys FOR DELETE PurchaseOrderItem.
-
-    METHODS read FOR READ
-      IMPORTING keys FOR READ PurchaseOrderItem RESULT result.
-ENDCLASS.
-
 CLASS lhc_PurchaseOrderItem IMPLEMENTATION.
   METHOD update.
   ENDMETHOD.
@@ -138,13 +146,6 @@ CLASS lhc_PurchaseOrderItem IMPLEMENTATION.
       result = CORRESPONDING #( lt_item MAPPING PurchaseOrder = ebeln PurchaseOrderItem = ebelp ).
     ENDIF.
   ENDMETHOD.
-ENDCLASS.
-
-CLASS lsc_zi_po_header DEFINITION INHERITING FROM cl_abap_behavior_saver.
-  PROTECTED SECTION.
-    METHODS save REDEFINITION.
-    METHODS finalize REDEFINITION.
-    METHODS check_before_save REDEFINITION.
 ENDCLASS.
 
 CLASS lsc_zi_po_header IMPLEMENTATION.
@@ -259,4 +260,11 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
 
   METHOD check_before_save.
   ENDMETHOD.
+ENDCLASS.
+
+**********************************************************************
+* GLOBAL IMPLEMENTATION
+**********************************************************************
+
+CLASS zbp_i_po IMPLEMENTATION.
 ENDCLASS.
