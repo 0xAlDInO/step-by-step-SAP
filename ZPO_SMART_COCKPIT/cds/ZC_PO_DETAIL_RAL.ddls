@@ -7,29 +7,37 @@ define view entity ZC_PO_DETAIL_RAL
       @UI.facet: [ { id: 'ItemInfo', type: #IDENTIFICATION_REFERENCE, label: 'Item Information', position: 10 } ]
 
       @UI.lineItem: [ { position: 10 } ]
+      @UI.identification: [ { position: 10 } ]
   key PurchaseOrder,
 
       @UI.lineItem: [ { position: 20 } ]
+      @UI.identification: [ { position: 20 } ]
   key PurchaseOrderItem,
 
       @UI.lineItem: [ { position: 30 } ]
+      @UI.identification: [ { position: 30 } ]
       Material,
 
       @UI.lineItem: [ { position: 40 } ]
+      @UI.identification: [ { position: 40 } ]
       Plant,
 
       @UI.lineItem: [ { position: 50 } ]
+      @UI.identification: [ { position: 50 } ]
       PurchaseOrderQuantity,
 
       @UI.lineItem: [ { position: 60 } ]
+      @UI.identification: [ { position: 60 } ]
       PurchaseOrderQuantityUnit,
 
       @UI.lineItem: [ { position: 70 } ]
+      @UI.identification: [ { position: 70 } ]
       NetPrice,
 
       Currency,
 
       @UI.lineItem: [ { position: 80 } ]
+      @UI.identification: [ { position: 80 } ]
       PurchaseOrderItemText,
 
       _Header : redirected to parent ZC_PO_LIST_RAL

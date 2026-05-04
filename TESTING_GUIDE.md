@@ -6,6 +6,8 @@ Ce guide explique comment tester les opérations de Création (CREATE) et Mise �
 
 La méthode la plus simple consiste à utiliser l'aperçu intégré dans ABAP Development Tools :
 
+> **Note Importante** : Si les boutons **Create** ou **Edit** ne s'affichent pas, assurez-vous d'avoir activé la **Behavior Definition de Projection** (`ZC_PO_LIST_RAL.bdef`). C'est elle qui expose les opérations CRUD au service OData.
+
 1.  Ouvrez le **Service Binding** `ZUI_PO.srvb`.
 2.  Dans la section "Service Details", sélectionnez l'entité `PurchaseOrder`.
 3.  Cliquez sur le bouton **Preview**.
