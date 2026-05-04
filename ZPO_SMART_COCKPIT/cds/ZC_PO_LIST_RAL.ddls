@@ -21,7 +21,7 @@ define root view entity ZC_PO_LIST_RAL
       Supplier,
 
       @UI.lineItem: [ { position: 40 } ]
-      PurchaseOrderType,
+      PurchaseOrderTypeCode,
 
       @UI.lineItem: [ { position: 50 } ]
       PurchaseOrderDate,

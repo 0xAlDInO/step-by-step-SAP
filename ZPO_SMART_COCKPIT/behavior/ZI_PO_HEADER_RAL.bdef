@@ -25,7 +25,7 @@ authorization master ( instance )
     PurchaseOrder = ebeln;
     CompanyCode = bukrs;
     Supplier = lifnr;
-    PurchaseOrderType = bsart;
+    PurchaseOrderTypeCode = bsart;
     PurchasingOrganization = ekorg;
     PurchasingGroup = ekgrp;
     PurchaseOrderDate = bedat;
@@ -43,7 +43,7 @@ authorization dependent by _Header
   update;
   delete;
 
-  field ( readonly ) PurchaseOrder; -- Indispensable pour la dépendance parent
+  field ( readonly ) PurchaseOrder;
 
   association _Header { with draft; }
 

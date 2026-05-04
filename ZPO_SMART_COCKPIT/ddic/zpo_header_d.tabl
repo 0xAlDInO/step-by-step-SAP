@@ -1,4 +1,4 @@
-@EndUserText.label: 'Draft table for ZI_PO_HEADER'
+@EndUserText.label: 'Draft table for ZI_PO_HEADER_RAL'
 @AbapCatalog.enhancementCategory: #EXTENSIBLE_ANY
 @AbapCatalog.tableCategory: #TRANSPARENT
 @AbapCatalog.deliveryClass: #A
@@ -8,7 +8,7 @@ define table zpo_header_d {
   key purchaseorder : ebeln not null;
   companycode       : bukrs;
   supplier          : lifnr;
-  purchaseordertype : bsart;
+  purchaseordertypecode : bsart; -- Renommé
   purchasingorganization : ekorg;
   purchasinggroup   : ekgrp;
   purchaseorderdate : bedat;

@@ -125,7 +125,7 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
       CASE ls_buffer-action.
         WHEN 'C'.
           ls_header = VALUE #( comp_code = ls_buffer-header-CompanyCode vendor = ls_buffer-header-Supplier
-                               doc_type = ls_buffer-header-PurchaseOrderType purch_org = ls_buffer-header-PurchasingOrganization
+                               doc_type = ls_buffer-header-PurchaseOrderTypeCode purch_org = ls_buffer-header-PurchasingOrganization
                                pur_group = ls_buffer-header-PurchasingGroup currency = ls_buffer-header-Currency doc_date = ls_buffer-header-PurchaseOrderDate ).
           ls_headerx = VALUE #( comp_code = 'X' vendor = 'X' doc_type = 'X' purch_org = 'X' pur_group = 'X' currency = 'X' doc_date = 'X' ).
           LOOP AT ls_buffer-items INTO DATA(ls_item).
@@ -134,13 +134,7 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
           ENDLOOP.
           CALL FUNCTION 'BAPI_PO_CREATE1' EXPORTING poheader = ls_header poheaderx = ls_headerx IMPORTING purchaseorder = lv_po TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
         WHEN 'U'.
-          ls_header-comp_code = ls_buffer-header-CompanyCode.
-          ls_headerx-comp_code = 'X'.
-          LOOP AT ls_buffer-items INTO ls_item.
-            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem quantity = ls_item-PurchaseOrderQuantity net_price = ls_item-NetPrice ) TO lt_items.
-            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem quantity = 'X' net_price = 'X' ) TO lt_itemsx.
-          ENDLOOP.
-          CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder poheader = ls_header poheaderx = ls_headerx TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
+          CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
         WHEN 'D'.
           SELECT ebelp FROM ekpo WHERE ebeln = @ls_buffer-header-PurchaseOrder INTO TABLE @DATA(lt_existing).
           LOOP AT lt_existing INTO DATA(lv_item).

@@ -8,7 +8,7 @@ define root view entity ZI_PO_HEADER_RAL
   key ebeln as PurchaseOrder,
       bukrs as CompanyCode,
       lifnr as Supplier,
-      bsart as PurchaseOrderType,
+      bsart as PurchaseOrderTypeCode, -- Renommé pour éviter le conflit EDM
       ekorg as PurchasingOrganization,
       ekgrp as PurchasingGroup,
       bedat as PurchaseOrderDate,
