@@ -1,6 +1,9 @@
 CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header_ral.
 ENDCLASS.
 
+CLASS zbp_i_po IMPLEMENTATION.
+ENDCLASS.
+
 **********************************************************************
 * LOCAL DEFINITIONS
 **********************************************************************
@@ -16,7 +19,7 @@ CLASS lcl_buffer DEFINITION.
     CLASS-DATA: mt_buffer TYPE TABLE OF ty_po_buffer WITH EMPTY KEY.
 ENDCLASS.
 
-CLASS lhc_PurchaseOrder DEFINITION INHERITING FROM cl_abap_behavior_handler.
+CLASS lhc_purchaseorder DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR PurchaseOrder RESULT result.
@@ -25,11 +28,11 @@ CLASS lhc_PurchaseOrder DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrder.
     METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrder RESULT result.
     METHODS lock FOR LOCK IMPORTING keys FOR LOCK PurchaseOrder.
-    METHODS rba_Items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result_full REQUEST requested_fields RESULT result LINK link.
-    METHODS cba_Items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
+    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_items FULL result_full REQUEST requested_fields RESULT result LINK link.
+    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_items.
 ENDCLASS.
 
-CLASS lhc_PurchaseOrderItem DEFINITION INHERITING FROM cl_abap_behavior_handler.
+CLASS lhc_purchaseorderitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrderItem.
     METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrderItem.
@@ -47,7 +50,7 @@ ENDCLASS.
 * LOCAL IMPLEMENTATIONS
 **********************************************************************
 
-CLASS lhc_PurchaseOrder IMPLEMENTATION.
+CLASS lhc_purchaseorder IMPLEMENTATION.
   METHOD get_instance_authorizations. ENDMETHOD.
 
   METHOD create.
@@ -86,9 +89,9 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
-  METHOD rba_Items. ENDMETHOD.
+  METHOD rba_items. ENDMETHOD.
 
-  METHOD cba_Items.
+  METHOD cba_items.
     LOOP AT entities_cba INTO DATA(ls_cba).
       READ TABLE lcl_buffer=>mt_buffer WITH KEY cid = ls_cba-%cid_ref REFERENCE INTO DATA(lr_buffer).
       IF sy-subrc <> 0.
@@ -103,7 +106,7 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
   ENDMETHOD.
 ENDCLASS.
 
-CLASS lhc_PurchaseOrderItem IMPLEMENTATION.
+CLASS lhc_purchaseorderitem IMPLEMENTATION.
   METHOD update. ENDMETHOD.
   METHOD delete. ENDMETHOD.
   METHOD read.
@@ -167,11 +170,4 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
   ENDMETHOD.
   METHOD finalize. ENDMETHOD.
   METHOD check_before_save. ENDMETHOD.
-ENDCLASS.
-
-**********************************************************************
-* GLOBAL IMPLEMENTATION
-**********************************************************************
-
-CLASS zbp_i_po IMPLEMENTATION.
 ENDCLASS.
