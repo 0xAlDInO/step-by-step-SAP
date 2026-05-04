@@ -23,6 +23,12 @@ define root view entity ZC_PO_LIST
       @UI.lineItem: [ { position: 40 } ]
       PurchaseOrderType,
 
+      @UI.lineItem: [ { position: 45 } ]
+      PurchasingOrganization,
+
+      @UI.lineItem: [ { position: 46 } ]
+      PurchasingGroup,
+
       @UI.lineItem: [ { position: 50 } ]
       PurchaseOrderDate,
 
