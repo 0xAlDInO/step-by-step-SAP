@@ -7,9 +7,7 @@ define root view entity ZC_PO_LIST
   provider contract transactional_query
   as projection on ZI_PO_HEADER
 {
-      @UI.facet: [
-        { id: 'GeneralInfo', type: #IDENTIFICATION_REFERENCE, label: 'General Information', position: 10 }
-      ]
+      @UI.facet: [ { id: 'GeneralInfo', type: #IDENTIFICATION_REFERENCE, label: 'General Information', position: 10 } ]
 
       @UI.lineItem: [ { position: 10 } ]
       @UI.identification: [ { position: 10 } ]
@@ -17,36 +15,21 @@ define root view entity ZC_PO_LIST
   key PurchaseOrder,
 
       @UI.lineItem: [ { position: 20 } ]
-      @UI.identification: [ { position: 20 } ]
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_CompanyCode', element: 'CompanyCode' } }]
       CompanyCode,
 
       @UI.lineItem: [ { position: 30 } ]
-      @UI.identification: [ { position: 30 } ]
       Supplier,
 
       @UI.lineItem: [ { position: 40 } ]
-      @UI.identification: [ { position: 40 } ]
       PurchaseOrderType,
 
-      @UI.lineItem: [ { position: 45 } ]
-      @UI.identification: [ { position: 45 } ]
-      PurchasingOrganization,
-
-      @UI.lineItem: [ { position: 46 } ]
-      @UI.identification: [ { position: 46 } ]
-      PurchasingGroup,
-
       @UI.lineItem: [ { position: 50 } ]
-      @UI.identification: [ { position: 50 } ]
       PurchaseOrderDate,
 
       @UI.lineItem: [ { position: 60 } ]
-      @UI.identification: [ { position: 60 } ]
       Currency,
 
       @UI.lineItem: [ { position: 80 } ]
-      @UI.identification: [ { position: 80 } ]
       CreationDate,
 
       /* Associations */
