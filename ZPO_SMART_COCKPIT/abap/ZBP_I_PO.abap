@@ -5,7 +5,7 @@ CLASS zbp_i_po IMPLEMENTATION.
 ENDCLASS.
 
 **********************************************************************
-* LOCAL CLASSES IMPLEMENTATION
+* LOCAL CLASSES DEFINITION & IMPLEMENTATION
 **********************************************************************
 
 CLASS lcl_buffer DEFINITION.
@@ -72,8 +72,10 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD read.
-    SELECT * FROM ekko FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder INTO TABLE @DATA(lt_po).
-    result = CORRESPONDING #( lt_po MAPPING PurchaseOrder = ebeln ).
+    IF keys IS NOT INITIAL.
+      SELECT * FROM ekko FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder INTO TABLE @DATA(lt_po).
+      result = CORRESPONDING #( lt_po MAPPING PurchaseOrder = ebeln ).
+    ENDIF.
   ENDMETHOD.
 
   METHOD lock.
@@ -131,8 +133,10 @@ CLASS lhc_PurchaseOrderItem IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD read.
-    SELECT * FROM ekpo FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder AND ebelp = @keys-PurchaseOrderItem INTO TABLE @DATA(lt_item).
-    result = CORRESPONDING #( lt_item MAPPING PurchaseOrder = ebeln PurchaseOrderItem = ebelp ).
+    IF keys IS NOT INITIAL.
+      SELECT * FROM ekpo FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder AND ebelp = @keys-PurchaseOrderItem INTO TABLE @DATA(lt_item).
+      result = CORRESPONDING #( lt_item MAPPING PurchaseOrder = ebeln PurchaseOrderItem = ebelp ).
+    ENDIF.
   ENDMETHOD.
 ENDCLASS.
 
@@ -160,25 +164,31 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
           ls_header-comp_code = ls_buffer-header-CompanyCode.
           ls_header-vendor    = ls_buffer-header-Supplier.
           ls_header-doc_type  = ls_buffer-header-PurchaseOrderType.
-          ls_header-waers     = ls_buffer-header-Currency.
+          ls_header-purch_org = ls_buffer-header-PurchasingOrganization.
+          ls_header-pur_group = ls_buffer-header-PurchasingGroup.
+          ls_header-currency  = ls_buffer-header-Currency.
           ls_header-doc_date  = ls_buffer-header-PurchaseOrderDate.
 
           ls_headerx-comp_code = 'X'.
           ls_headerx-vendor    = 'X'.
           ls_headerx-doc_type  = 'X'.
-          ls_headerx-waers     = 'X'.
+          ls_headerx-purch_org = 'X'.
+          ls_headerx-pur_group = 'X'.
+          ls_headerx-currency  = 'X'.
           ls_headerx-doc_date  = 'X'.
 
           LOOP AT ls_buffer-items INTO DATA(ls_item).
             APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
                             material = ls_item-Material
                             plant = ls_item-Plant
-                            quantity = ls_item-PurchaseOrderQuantity ) TO lt_items.
+                            quantity = ls_item-PurchaseOrderQuantity
+                            po_unit  = ls_item-PurchaseOrderQuantityUnit ) TO lt_items.
 
             APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
                             material = 'X'
                             plant = 'X'
-                            quantity = 'X' ) TO lt_itemsx.
+                            quantity = 'X'
+                            po_unit  = 'X' ) TO lt_itemsx.
           ENDLOOP.
 
           CALL FUNCTION 'BAPI_PO_CREATE1'
@@ -193,10 +203,8 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
               return    = lt_return.
 
         WHEN 'U'.
-          " Map header fields for update
           ls_header-comp_code = ls_buffer-header-CompanyCode.
           ls_headerx-comp_code = 'X'.
-          " Add more fields as needed
 
           LOOP AT ls_buffer-items INTO ls_item.
             APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
@@ -218,7 +226,6 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
               return        = lt_return.
 
         WHEN 'D'.
-          " SOFT DELETE logic: select existing items for the PO
           SELECT ebelp FROM ekpo WHERE ebeln = @ls_buffer-header-PurchaseOrder INTO TABLE @DATA(lt_existing_items).
           LOOP AT lt_existing_items INTO DATA(lv_item_num).
             APPEND VALUE #( po_item = lv_item_num delete_ind = 'X' ) TO lt_items.

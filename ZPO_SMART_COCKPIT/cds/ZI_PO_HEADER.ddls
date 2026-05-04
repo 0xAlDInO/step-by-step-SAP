@@ -9,6 +9,8 @@ define root view entity ZI_PO_HEADER
       bukrs as CompanyCode,
       lifnr as Supplier,
       bsart as PurchaseOrderType,
+      ekorg as PurchasingOrganization,
+      ekgrp as PurchasingGroup,
       bedat as PurchaseOrderDate,
       waers as Currency,
       @Semantics.amount.currencyCode: 'Currency'
