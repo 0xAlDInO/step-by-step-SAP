@@ -38,7 +38,7 @@ CLASS lhc_PurchaseOrder DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR LOCK PurchaseOrder.
 
     METHODS rba_Items FOR READ
-      IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result REQUEST requested_fields RESULT result LINK link.
+      IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result_full REQUEST requested_fields RESULT result LINK link.
 
     METHODS cba_Items FOR MODIFY
       IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.

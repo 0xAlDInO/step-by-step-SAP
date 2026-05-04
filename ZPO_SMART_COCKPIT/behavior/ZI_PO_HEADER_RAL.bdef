@@ -14,6 +14,12 @@ authorization master ( instance )
 
   association _Items { create; with draft; }
 
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
   mapping for ekko
   {
     PurchaseOrder = ebeln;
@@ -36,6 +42,8 @@ authorization dependent by _Header
 {
   update;
   delete;
+
+  field ( readonly ) PurchaseOrder; -- Indispensable pour la dépendance parent
 
   association _Header { with draft; }
 
