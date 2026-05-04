@@ -1,8 +1,5 @@
-CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header_ral.
-ENDCLASS.
-
 **********************************************************************
-* LOCAL TYPES
+* LOCAL TYPES (Definitions)
 **********************************************************************
 
 CLASS lcl_buffer DEFINITION.
@@ -13,7 +10,6 @@ CLASS lcl_buffer DEFINITION.
              items  TYPE TABLE OF zi_po_item_ral WITH EMPTY KEY,
              action TYPE char1, " C: Create, U: Update, D: Delete
            END OF ty_po_buffer.
-
     CLASS-DATA: mt_buffer TYPE TABLE OF ty_po_buffer WITH EMPTY KEY.
 ENDCLASS.
 
@@ -21,40 +17,20 @@ CLASS lhc_PurchaseOrder DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR PurchaseOrder RESULT result.
-
-    METHODS create FOR MODIFY
-      IMPORTING entities FOR CREATE PurchaseOrder.
-
-    METHODS update FOR MODIFY
-      IMPORTING entities FOR UPDATE PurchaseOrder.
-
-    METHODS delete FOR MODIFY
-      IMPORTING keys FOR DELETE PurchaseOrder.
-
-    METHODS read FOR READ
-      IMPORTING keys FOR READ PurchaseOrder RESULT result.
-
-    METHODS lock FOR LOCK
-      IMPORTING keys FOR LOCK PurchaseOrder.
-
-    METHODS rba_Items FOR READ
-      IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result_full REQUEST requested_fields RESULT result LINK link.
-
-    METHODS cba_Items FOR MODIFY
-      IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
-
+    METHODS create FOR MODIFY IMPORTING entities FOR CREATE PurchaseOrder.
+    METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrder.
+    METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrder.
+    METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrder RESULT result.
+    METHODS lock FOR LOCK IMPORTING keys FOR LOCK PurchaseOrder.
+    METHODS rba_Items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result_full REQUEST requested_fields RESULT result LINK link.
+    METHODS cba_Items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
 ENDCLASS.
 
 CLASS lhc_PurchaseOrderItem DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
-    METHODS update FOR MODIFY
-      IMPORTING entities FOR UPDATE PurchaseOrderItem.
-
-    METHODS delete FOR MODIFY
-      IMPORTING keys FOR DELETE PurchaseOrderItem.
-
-    METHODS read FOR READ
-      IMPORTING keys FOR READ PurchaseOrderItem RESULT result.
+    METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrderItem.
+    METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrderItem.
+    METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrderItem RESULT result.
 ENDCLASS.
 
 CLASS lsc_zi_po_header DEFINITION INHERITING FROM cl_abap_behavior_saver.
@@ -69,9 +45,7 @@ ENDCLASS.
 **********************************************************************
 
 CLASS lhc_PurchaseOrder IMPLEMENTATION.
-
-  METHOD get_instance_authorizations.
-  ENDMETHOD.
+  METHOD get_instance_authorizations. ENDMETHOD.
 
   METHOD create.
     LOOP AT entities INTO DATA(ls_entity).
@@ -101,20 +75,15 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
   METHOD lock.
     LOOP AT keys INTO DATA(ls_key).
       CALL FUNCTION 'ENQUEUE_EMEKKOE'
-        EXPORTING
-          ebeln          = ls_key-PurchaseOrder
-        EXCEPTIONS
-          foreign_lock   = 1
-          system_failure = 2
-          OTHERS         = 3.
+        EXPORTING ebeln = ls_key-PurchaseOrder
+        EXCEPTIONS foreign_lock = 1 system_failure = 2 OTHERS = 3.
       IF sy-subrc <> 0.
         APPEND VALUE #( PurchaseOrder = ls_key-PurchaseOrder ) TO failed-purchaseorder.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
 
-  METHOD rba_Items.
-  ENDMETHOD.
+  METHOD rba_Items. ENDMETHOD.
 
   METHOD cba_Items.
     LOOP AT entities_cba INTO DATA(ls_cba).
@@ -122,7 +91,6 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
       IF sy-subrc <> 0.
          READ TABLE lcl_buffer=>mt_buffer WITH KEY header-PurchaseOrder = ls_cba-PurchaseOrder REFERENCE INTO lr_buffer.
       ENDIF.
-
       IF lr_buffer IS BOUND.
         LOOP AT ls_cba-%target INTO DATA(ls_target).
           INSERT CORRESPONDING #( ls_target ) INTO TABLE lr_buffer->items.
@@ -130,16 +98,11 @@ CLASS lhc_PurchaseOrder IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
-
 ENDCLASS.
 
 CLASS lhc_PurchaseOrderItem IMPLEMENTATION.
-  METHOD update.
-  ENDMETHOD.
-
-  METHOD delete.
-  ENDMETHOD.
-
+  METHOD update. ENDMETHOD.
+  METHOD delete. ENDMETHOD.
   METHOD read.
     IF keys IS NOT INITIAL.
       SELECT * FROM ekpo FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder AND ebelp = @keys-PurchaseOrderItem INTO TABLE @DATA(lt_item).
@@ -159,112 +122,54 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
 
     LOOP AT lcl_buffer=>mt_buffer INTO DATA(ls_buffer).
       CLEAR: ls_header, ls_headerx, lt_items, lt_itemsx, lt_return, lv_po.
-
       CASE ls_buffer-action.
         WHEN 'C'.
-          ls_header-comp_code = ls_buffer-header-CompanyCode.
-          ls_header-vendor    = ls_buffer-header-Supplier.
-          ls_header-doc_type  = ls_buffer-header-PurchaseOrderType.
-          ls_header-purch_org = ls_buffer-header-PurchasingOrganization.
-          ls_header-pur_group = ls_buffer-header-PurchasingGroup.
-          ls_header-currency  = ls_buffer-header-Currency.
-          ls_header-doc_date  = ls_buffer-header-PurchaseOrderDate.
-
-          ls_headerx-comp_code = 'X'.
-          ls_headerx-vendor    = 'X'.
-          ls_headerx-doc_type  = 'X'.
-          ls_headerx-purch_org = 'X'.
-          ls_headerx-pur_group = 'X'.
-          ls_headerx-currency  = 'X'.
-          ls_headerx-doc_date  = 'X'.
-
+          ls_header = VALUE #( comp_code = ls_buffer-header-CompanyCode vendor = ls_buffer-header-Supplier
+                               doc_type = ls_buffer-header-PurchaseOrderType purch_org = ls_buffer-header-PurchasingOrganization
+                               pur_group = ls_buffer-header-PurchasingGroup currency = ls_buffer-header-Currency doc_date = ls_buffer-header-PurchaseOrderDate ).
+          ls_headerx = VALUE #( comp_code = 'X' vendor = 'X' doc_type = 'X' purch_org = 'X' pur_group = 'X' currency = 'X' doc_date = 'X' ).
           LOOP AT ls_buffer-items INTO DATA(ls_item).
-            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
-                            material = ls_item-Material
-                            plant = ls_item-Plant
-                            quantity = ls_item-PurchaseOrderQuantity
-                            po_unit  = ls_item-PurchaseOrderQuantityUnit ) TO lt_items.
-
-            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
-                            material = 'X'
-                            plant = 'X'
-                            quantity = 'X'
-                            po_unit  = 'X' ) TO lt_itemsx.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem material = ls_item-Material plant = ls_item-Plant quantity = ls_item-PurchaseOrderQuantity po_unit = ls_item-PurchaseOrderQuantityUnit net_price = ls_item-NetPrice ) TO lt_items.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem material = 'X' plant = 'X' quantity = 'X' po_unit = 'X' net_price = 'X' ) TO lt_itemsx.
           ENDLOOP.
-
-          CALL FUNCTION 'BAPI_PO_CREATE1'
-            EXPORTING
-              poheader  = ls_header
-              poheaderx = ls_headerx
-            IMPORTING
-              purchaseorder = lv_po
-            TABLES
-              poitem    = lt_items
-              poitemx   = lt_itemsx
-              return    = lt_return.
-
+          CALL FUNCTION 'BAPI_PO_CREATE1' EXPORTING poheader = ls_header poheaderx = ls_headerx IMPORTING purchaseorder = lv_po TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
         WHEN 'U'.
           ls_header-comp_code = ls_buffer-header-CompanyCode.
           ls_headerx-comp_code = 'X'.
-
           LOOP AT ls_buffer-items INTO ls_item.
-            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
-                            quantity = ls_item-PurchaseOrderQuantity
-                            net_price = ls_item-NetPrice ) TO lt_items.
-            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem
-                            quantity = 'X'
-                            net_price = 'X' ) TO lt_itemsx.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem quantity = ls_item-PurchaseOrderQuantity net_price = ls_item-NetPrice ) TO lt_items.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem quantity = 'X' net_price = 'X' ) TO lt_itemsx.
           ENDLOOP.
-
-          CALL FUNCTION 'BAPI_PO_CHANGE'
-            EXPORTING
-              purchaseorder = ls_buffer-header-PurchaseOrder
-              poheader      = ls_header
-              poheaderx     = ls_headerx
-            TABLES
-              poitem        = lt_items
-              poitemx       = lt_itemsx
-              return        = lt_return.
-
+          CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder poheader = ls_header poheaderx = ls_headerx TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
         WHEN 'D'.
-          SELECT ebelp FROM ekpo WHERE ebeln = @ls_buffer-header-PurchaseOrder INTO TABLE @DATA(lt_existing_items).
-          LOOP AT lt_existing_items INTO DATA(lv_item_num).
-            APPEND VALUE #( po_item = lv_item_num delete_ind = 'X' ) TO lt_items.
-            APPEND VALUE #( po_item = lv_item_num delete_ind = 'X' ) TO lt_itemsx.
+          SELECT ebelp FROM ekpo WHERE ebeln = @ls_buffer-header-PurchaseOrder INTO TABLE @DATA(lt_existing).
+          LOOP AT lt_existing INTO DATA(lv_item).
+            APPEND VALUE #( po_item = lv_item delete_ind = 'X' ) TO lt_items.
+            APPEND VALUE #( po_item = lv_item delete_ind = 'X' ) TO lt_itemsx.
           ENDLOOP.
-
-          CALL FUNCTION 'BAPI_PO_CHANGE'
-            EXPORTING
-              purchaseorder = ls_buffer-header-PurchaseOrder
-            TABLES
-              poitem        = lt_items
-              poitemx       = lt_itemsx
-              return        = lt_return.
+          CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
       ENDCASE.
 
       IF lv_po IS NOT INITIAL.
         APPEND VALUE #( %cid = ls_buffer-cid PurchaseOrder = lv_po ) TO mapped-purchaseorder.
       ENDIF.
-
-      LOOP AT lt_return INTO DATA(ls_return) WHERE type CA 'AEX'.
-        APPEND VALUE #( %msg = cl_abap_behv=>new_message_from_bapi( is_bapiret2 = ls_return ) ) TO reported-purchaseorder.
+      LOOP AT lt_return INTO DATA(ls_ret) WHERE type CA 'AEX'.
+        APPEND VALUE #( %msg = cl_abap_behv=>new_message_from_bapi( is_bapiret2 = ls_ret ) ) TO reported-purchaseorder.
         APPEND VALUE #( PurchaseOrder = COND #( WHEN lv_po IS NOT INITIAL THEN lv_po ELSE ls_buffer-header-PurchaseOrder ) ) TO failed-purchaseorder.
       ENDLOOP.
     ENDLOOP.
-
     CLEAR lcl_buffer=>mt_buffer.
   ENDMETHOD.
-
-  METHOD finalize.
-  ENDMETHOD.
-
-  METHOD check_before_save.
-  ENDMETHOD.
+  METHOD finalize. ENDMETHOD.
+  METHOD check_before_save. ENDMETHOD.
 ENDCLASS.
 
 **********************************************************************
-* GLOBAL IMPLEMENTATION
+* GLOBAL CLASS
 **********************************************************************
+
+CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header_ral.
+ENDCLASS.
 
 CLASS zbp_i_po IMPLEMENTATION.
 ENDCLASS.
