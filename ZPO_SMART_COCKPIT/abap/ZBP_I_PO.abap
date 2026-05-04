@@ -28,8 +28,8 @@ CLASS lhc_purchaseorder DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrder.
     METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrder RESULT result.
     METHODS lock FOR LOCK IMPORTING keys FOR LOCK PurchaseOrder.
-    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items RESULT result LINK link.
-    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
+    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\Items RESULT result LINK link.
+    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\Items.
 ENDCLASS.
 
 CLASS lhc_purchaseorderitem DEFINITION INHERITING FROM cl_abap_behavior_handler.

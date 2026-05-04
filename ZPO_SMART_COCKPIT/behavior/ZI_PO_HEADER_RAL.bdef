@@ -12,7 +12,7 @@ authorization master ( instance )
   update;
   delete;
 
-  association _Items { create; with draft; }
+  association Items { create; with draft; }
 
   draft action Edit;
   draft action Activate optimized;

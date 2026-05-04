@@ -8,7 +8,7 @@ define behavior for ZC_PO_LIST_RAL alias PurchaseOrder
   use update;
   use delete;
 
-  use association _Items { create; with draft; }
+  use association Items { create; with draft; }
 
   use action Edit;
   use action Activate;
