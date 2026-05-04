@@ -1,4 +1,4 @@
-@EndUserText.label: 'Draft table for ZI_PO_ITEM'
+@EndUserText.label: 'Draft table for ZI_PO_ITEM_RAL'
 @AbapCatalog.enhancementCategory: #EXTENSIBLE_ANY
 @AbapCatalog.tableCategory: #TRANSPARENT
 @AbapCatalog.deliveryClass: #A
@@ -8,9 +8,9 @@ define table zpo_item_d {
   key purchaseorder : ebeln not null;
   key purchaseorderitem : ebelp not null;
   material          : matnr;
-  plant             : werks;
+  plant             : werks_d;
   @Semantics.quantity.unitOfMeasure: 'zpo_item_d.purchaseorderquantityunit'
-  purchaseorderquantity : menge;
+  purchaseorderquantity : menge_d;
   purchaseorderquantityunit : meins;
   @Semantics.amount.currencyCode: 'zpo_item_d.currency'
   netprice          : netpr;

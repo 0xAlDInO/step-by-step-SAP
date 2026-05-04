@@ -2,6 +2,6 @@
 define service binding ZUI_PO
   type odatav4_ui
 {
-  expose ZC_PO_LIST as PurchaseOrder;
-  expose ZC_PO_DETAIL as PurchaseOrderItem;
+  expose ZC_PO_LIST_RAL as PurchaseOrder;
+  expose ZC_PO_DETAIL_RAL as PurchaseOrderItem;
 }
