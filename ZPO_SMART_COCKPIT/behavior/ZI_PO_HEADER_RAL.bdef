@@ -12,9 +12,6 @@ authorization master ( instance )
   update;
   delete;
 
-  field ( readonly ) PurchaseOrder;
-  field ( mandatory ) CompanyCode, Supplier, PurchaseOrderType;
-
   association _Items { create; with draft; }
 
   mapping for ekko
@@ -34,14 +31,11 @@ authorization master ( instance )
 
 define behavior for ZI_PO_ITEM_RAL alias PurchaseOrderItem
 draft table zpo_item_d
-lock dependency by _Header
+lock dependent by _Header
 authorization dependent by _Header
 {
   update;
   delete;
-
-  field ( readonly ) PurchaseOrder, PurchaseOrderItem;
-  field ( mandatory ) Material, Plant, PurchaseOrderQuantity;
 
   association _Header { with draft; }
 
