@@ -6,11 +6,13 @@ define behavior for ZI_PO_HEADER_RAL alias PurchaseOrder
 draft table zpo_header_d
 lock master
 total etag CreationDate
-authorization master ( instance )
+authorization master ( global, instance )
 {
   create;
   update;
   delete;
+
+  field ( readonly ) PurchaseOrder;
 
   association _Items { create; with draft; }
 
@@ -44,6 +46,7 @@ authorization dependent by _Header
   delete;
 
   field ( readonly ) PurchaseOrder;
+  field ( readonly:update ) PurchaseOrderItem;
 
   association _Header { with draft; }
 
