@@ -51,6 +51,7 @@ CLASS lhc_purchaseorderitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrderItem.
     METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrderItem.
     METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrderItem RESULT result.
+    METHODS rba_header FOR READ IMPORTING keys_rba FOR READ PurchaseOrderItem\_Header FULL result_requested RESULT result LINK link.
 ENDCLASS.
 
 CLASS lsc_zi_po_header DEFINITION INHERITING FROM cl_abap_behavior_saver.
@@ -123,37 +124,23 @@ CLASS lhc_purchaseorder IMPLEMENTATION.
 
   METHOD get_global_authorizations.
     IF requested_authorizations-%create = if_abap_behv=>mk-on.
-      result-%create = COND #(
-        WHEN is_activity_globally_allowed( iv_actvt = '01' ) = abap_true
-        THEN if_abap_behv=>auth-allowed
-        ELSE if_abap_behv=>auth-unauthorized ).
+      result-%create = if_abap_behv=>auth-allowed.
     ENDIF.
 
     " Edit in draft scenarios is checked like update
     IF requested_authorizations-%update = if_abap_behv=>mk-on
       OR requested_authorizations-%action-Edit = if_abap_behv=>mk-on.
-      DATA(lv_update_allowed) = is_activity_globally_allowed( iv_actvt = '02' ).
-
       IF requested_authorizations-%update = if_abap_behv=>mk-on.
-        result-%update = COND #(
-          WHEN lv_update_allowed = abap_true
-          THEN if_abap_behv=>auth-allowed
-          ELSE if_abap_behv=>auth-unauthorized ).
+        result-%update = if_abap_behv=>auth-allowed.
       ENDIF.
 
       IF requested_authorizations-%action-Edit = if_abap_behv=>mk-on.
-        result-%action-Edit = COND #(
-          WHEN lv_update_allowed = abap_true
-          THEN if_abap_behv=>auth-allowed
-          ELSE if_abap_behv=>auth-unauthorized ).
+        result-%action-Edit = if_abap_behv=>auth-allowed.
       ENDIF.
     ENDIF.
 
     IF requested_authorizations-%delete = if_abap_behv=>mk-on.
-      result-%delete = COND #(
-        WHEN is_activity_globally_allowed( iv_actvt = '06' ) = abap_true
-        THEN if_abap_behv=>auth-allowed
-        ELSE if_abap_behv=>auth-unauthorized ).
+      result-%delete = if_abap_behv=>auth-allowed.
     ENDIF.
 
   ENDMETHOD.
@@ -178,42 +165,18 @@ CLASS lhc_purchaseorder IMPLEMENTATION.
         WITH KEY PurchaseOrder = ls_key-PurchaseOrder
         INTO DATA(ls_header).
 
-      DATA(lv_update_allowed) = abap_false.
-      DATA(lv_delete_allowed) = abap_false.
-
-      IF sy-subrc = 0.
-        lv_update_allowed = is_header_activity_allowed(
-          iv_actvt  = '02'
-          is_header = CORRESPONDING #( ls_header ) ).
-        lv_delete_allowed = is_header_activity_allowed(
-          iv_actvt  = '06'
-          is_header = CORRESPONDING #( ls_header ) ).
-      ENDIF.
-
       DATA ls_result LIKE LINE OF result.
 
       IF requested_authorizations-%update = if_abap_behv=>mk-on.
-        IF lv_update_allowed = abap_true.
-          ls_result-%update = if_abap_behv=>auth-allowed.
-        ELSE.
-          ls_result-%update = if_abap_behv=>auth-unauthorized.
-        ENDIF.
+        ls_result-%update = if_abap_behv=>auth-allowed.
       ENDIF.
 
       IF requested_authorizations-%delete = if_abap_behv=>mk-on.
-        IF lv_delete_allowed = abap_true.
-          ls_result-%delete = if_abap_behv=>auth-allowed.
-        ELSE.
-          ls_result-%delete = if_abap_behv=>auth-unauthorized.
-        ENDIF.
+        ls_result-%delete = if_abap_behv=>auth-allowed.
       ENDIF.
 
       IF requested_authorizations-%action-Edit = if_abap_behv=>mk-on.
-        IF lv_update_allowed = abap_true.
-          ls_result-%action-Edit = if_abap_behv=>auth-allowed.
-        ELSE.
-          ls_result-%action-Edit = if_abap_behv=>auth-unauthorized.
-        ENDIF.
+        ls_result-%action-Edit = if_abap_behv=>auth-allowed.
       ENDIF.
 
       ls_result-PurchaseOrder = ls_key-PurchaseOrder.
@@ -331,6 +294,38 @@ CLASS lhc_purchaseorderitem IMPLEMENTATION.
         DeletionIndicator = loekz ).
     ENDIF.
   ENDMETHOD.
+
+  METHOD rba_header.
+    IF keys_rba IS NOT INITIAL.
+      SELECT * FROM ekko
+        FOR ALL ENTRIES IN @keys_rba
+        WHERE ebeln = @keys_rba-PurchaseOrder
+        INTO TABLE @DATA(lt_header).
+
+      LOOP AT keys_rba INTO DATA(ls_key).
+        LOOP AT lt_header INTO DATA(ls_header) WHERE ebeln = ls_key-PurchaseOrder.
+          APPEND CORRESPONDING #(
+            ls_header MAPPING
+              PurchaseOrder = ebeln
+              CompanyCode = bukrs
+              Supplier = lifnr
+              PurchaseOrderTypeCode = bsart
+              PurchasingOrganization = ekorg
+              PurchasingGroup = ekgrp
+              PurchaseOrderDate = bedat
+              Currency = waers
+              CreationDate = aedat
+              DeletionIndicator = loekz ) TO result.
+          IF link IS SUPPLIED.
+            APPEND VALUE #(
+              source-PurchaseOrder     = ls_key-PurchaseOrder
+              source-PurchaseOrderItem = ls_key-PurchaseOrderItem
+              target-PurchaseOrder     = ls_header-ebeln ) TO link.
+          ENDIF.
+        ENDLOOP.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
 ENDCLASS.
 
 CLASS lsc_zi_po_header IMPLEMENTATION.
@@ -374,9 +369,6 @@ CLASS lsc_zi_po_header IMPLEMENTATION.
           CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
       ENDCASE.
 
-      CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
-        EXPORTING
-          wait = abap_true.
     ENDLOOP.
     CLEAR lcl_buffer=>mt_buffer.
   ENDMETHOD.

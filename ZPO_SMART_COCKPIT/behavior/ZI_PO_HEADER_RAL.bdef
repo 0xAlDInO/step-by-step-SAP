@@ -45,8 +45,7 @@ authorization dependent by _Header
   update;
   delete;
 
-  field ( readonly ) PurchaseOrder;
-  field ( readonly:update ) PurchaseOrderItem;
+  field ( readonly ) PurchaseOrder, PurchaseOrderItem;
 
   association _Header { with draft; }
 

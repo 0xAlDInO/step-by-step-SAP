@@ -1,133 +1,284 @@
-# Cahier des Charges Techniques - Application Purchase Order RAP
+# Cahier des Charges Techniques - Fiori element / CDS
 
-## Vue d'ensemble
-Cette application est un exemple de développement RAP (RESTful ABAP Programming) pour la gestion des bons de commande (Purchase Orders) en SAP S/4HANA. Elle utilise un scénario unmanaged pour intégrer le BAPI `BAPI_PO_CREATE1` lors de la création.
+## 1. Objet
 
-## Architecture
-- **Technologie** : ABAP RAP unmanaged
-- **OData** : Version 4
-- **UI** : Fiori Elements (List Report / Object Page)
-- **Package** : `ZPO_SMART_COCKPIT`
+`ZPO_SMART_COCKPIT` est un exemple de Business Object RAP pour la consultation de Purchase Orders SAP sur la base des tables standard `EKKO` et `EKPO`.
 
-## Modèle de données
-### Vues CDS Interface
-- `ZI_PO_HEADER` : Vue sur table `EKKO` (en-tête du bon de commande)
-- `ZI_PO_ITEM` : Vue sur table `EKPO` (lignes du bon de commande)
-- Association : Header -> Items (1:N)
+Le projet est construit en **RAP unmanaged avec draft**. Dans l'état actuel documenté ici, l'usage retenu et validé est la **consommation de données** via OData V4 et Fiori Elements.
 
-### Champs de l'en-tête (ZI_PO_HEADER)
-- `EBELN` (key) : Numéro du bon de commande (CHAR 10)
-- `BUKRS` : Société (CHAR 4)
-- `LIFNR` : Fournisseur (CHAR 10)
-- `BSART` : Type de document (CHAR 4)
-- `BEDAT` : Date du document (DATS)
-- `WAERS` : Devise (CUKY 5)
-- `NETWR` : Montant net (CURR 15,2)
-- `ERNAM` : Créé par (CHAR 12)
-- `ERDAT` : Date de création (DATS)
-- `AEDAT` : Date de modification (DATS)
-- `LOEKZ` : Indicateur de suppression (CHAR 1)
+## 2. Périmètre actuel
 
-### Champs des items (ZI_PO_ITEM)
-- `EBELN` (key) : Numéro du bon de commande (CHAR 10)
-- `EBELP` (key) : Numéro de ligne (NUMC 5)
-- `MATNR` : Matériau (CHAR 18)
-- `WERKS` : Division (CHAR 4)
-- `MENGE` : Quantité (QUAN 13,3)
-- `MEINS` : Unité de mesure (UNIT 3)
-- `NETPR` : Prix net (CURR 11,2)
-- `TXZ01` : Texte descriptif (CHAR 40)
-- `LOEKZ` : Indicateur de suppression (CHAR 1)
+Le périmètre actuellement retenu comme fonctionnel est le suivant :
 
-### Vues CDS Consommation
-- `ZC_PO_LIST` : Vue liste avec annotations Fiori (`@UI.lineItem`)
-- `ZC_PO_DETAIL` : Vue détail avec annotations (`@UI.facet`, `@UI.identification`)
+- Exposition OData V4 d'un BO `PurchaseOrder`
+- Lecture header et items
+- Navigation `PurchaseOrder -> Items`
+- Navigation `PurchaseOrderItem -> Header`
+- Exposition des annotations UI pour Fiori Elements
 
-## Comportement RAP
-### Définition (`ZI_PO_HEADER.bdef`)
-- Opérations : create, update, delete
-- Implémentation : Classe `ZBP_I_PO`
-- Table persistante : `ekko`
+Les opérations de modification (`create`, `update`, `delete`, `Edit`) existent dans le code technique, mais elles ne sont pas considérées comme stabilisées ni incluses dans le périmètre fonctionnel de cette spécification.
 
-### Implémentation (`ZBP_I_PO.abap`)
-- **CREATE** : Appel `BAPI_PO_CREATE1` + `BAPI_TRANSACTION_COMMIT`
-- **UPDATE** : Placeholder (simulation, recommande `BAPI_PO_CHANGE`)
-- **DELETE** : Non supporté (annulation métier recommandée)
-- **READ** : Automatique via CDS
+## 3. Architecture
 
-## Service OData V4
-- Définition : `ZUI_PO.srvd` (expose `ZC_PO_LIST` et `ZC_PO_DETAIL`)
-- Binding : `ZUI_PO.srvb` (service `ZUI_PO_SRV`)
+### 3.1 Stack technique
 
-## Intégration Fiori Elements
-- **List Report** : Utilise `POList` (entity set de `ZC_PO_LIST`)
-- **Object Page** : Utilise `PODetail` (entity set de `ZC_PO_DETAIL`)
-- Annotations : `@UI.lineItem`, `@UI.identification`, `@UI.facet` pour génération automatique
-
-## Fonctionnement CRUD
-### Lecture (READ)
-- Automatique via CDS views
-- Accessible via OData GET sur `/sap/opu/odata/v4/ZUI_PO_SRV/POList` ou `PODetail`
-
-### Création (CREATE)
-- Payload JSON envoyé via POST sur `POList`
-- Mapping header/item vers structures BAPI
-- Validation et commit transaction
-- Retour du numéro de bon de commande créé
-
-### Mise à jour (UPDATE)
-- Implémentée avec `BAPI_PO_CHANGE` + `BAPI_TRANSACTION_COMMIT`
-- Mappe header/item vers structures BAPI avec indicateurs de changement
-- Gère les erreurs et commit la transaction
-
-### Suppression (DELETE)
-- Non supportée
-- Raison : Les bons de commande SAP ne se suppriment pas directement (utiliser annulation)
-
-## Déploiement
-1. Créer package `ZPO_SMART_COCKPIT` dans ADT
-2. Créer et activer CDS views (interface puis consommation)
-3. Créer et activer behavior definition/implementation
-4. Créer et activer service definition/binding
-5. Créer et activer classe ABAP `ZBP_I_PO`
-6. Publier service dans `/IWFND/MAINT_SERVICE`
-7. Tester via `/IWFND/GW_CLIENT`
-8. Créer app Fiori Elements pointant sur `ZUI_PO_SRV`
-
-## Exemple de payload CREATE
-```json
-{
-  "BUKRS": "1000",
-  "LIFNR": "0000123456",
-  "BSART": "NB",
-  "BEDAT": "20260503",
-  "WAERS": "EUR",
-  "NETWR": "1000.00",
-  "AEDAT": "20260503",
-  "POItems": [
-    {
-      "EBELP": "00010",
-      "MATNR": "MAT001",
-      "WERKS": "1000",
-      "MENGE": "10",
-      "MEINS": "PC",
-      "NETPR": "100.00",
-      "TXZ01": "Item 1 description"
-    }
-  ]
-}
-```
-
-## Risques et considérations
-- Champs obligatoires BAPI peuvent varier selon configuration SAP
-- Autorisations nécessaires pour BAPI et tables
-- Test en environnement de développement avant production
-- UPDATE/DELETE à implémenter selon besoin métier
-
-## Technologies utilisées
 - SAP S/4HANA ABAP
-- CDS Views
-- Behavior Definition/Implementation
-- OData V4
-- Fiori Elements
-- BAPI_PO_CREATE1
+- RAP unmanaged
+- OData V4 UI service binding
+- Fiori Elements List Report / Object Page
+- Tables standards SAP : `EKKO`, `EKPO`
+
+### 3.2 Package
+
+- Package logique : `ZPO_SMART_COCKPIT`
+
+### 3.3 Objets principaux
+
+- CDS interface header : [ZI_PO_HEADER_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZI_PO_HEADER_RAL.ddls)
+- CDS interface item : [ZI_PO_ITEM_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZI_PO_ITEM_RAL.ddls)
+- CDS consommation header : [ZC_PO_LIST_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZC_PO_LIST_RAL.ddls)
+- CDS consommation item : [ZC_PO_DETAIL_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZC_PO_DETAIL_RAL.ddls)
+- Behavior definition interface : [ZI_PO_HEADER_RAL.bdef](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/behavior/ZI_PO_HEADER_RAL.bdef)
+- Behavior definition projection : [ZC_PO_LIST_RAL.bdef](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/behavior/ZC_PO_LIST_RAL.bdef)
+- Behavior pool : [ZBP_I_PO.abap](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/abap/ZBP_I_PO.abap)
+- Service definition : [ZUI_PO.srvd](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvd)
+- Service binding : [ZUI_PO.srvb](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvb)
+
+## 4. Modèle de données
+
+### 4.1 Header
+
+Le BO racine projette les données de `EKKO`.
+
+Champs métiers exposés :
+
+- `PurchaseOrder` <= `EKKO-EBELN`
+- `CompanyCode` <= `EKKO-BUKRS`
+- `Supplier` <= `EKKO-LIFNR`
+- `PurchaseOrderTypeCode` <= `EKKO-BSART`
+- `PurchasingOrganization` <= `EKKO-EKORG`
+- `PurchasingGroup` <= `EKKO-EKGRP`
+- `PurchaseOrderDate` <= `EKKO-BEDAT`
+- `Currency` <= `EKKO-WAERS`
+- `CreationDate` <= `EKKO-AEDAT`
+- `DeletionIndicator` <= `EKKO-LOEKZ`
+
+### 4.2 Item
+
+Le BO enfant projette les données de `EKPO`.
+
+Champs métiers exposés :
+
+- `PurchaseOrder` <= `EKPO-EBELN`
+- `PurchaseOrderItem` <= `EKPO-EBELP`
+- `Material` <= `EKPO-MATNR`
+- `Plant` <= `EKPO-WERKS`
+- `PurchaseOrderQuantity` <= `EKPO-MENGE`
+- `PurchaseOrderQuantityUnit` <= `EKPO-MEINS`
+- `NetPrice` <= `EKPO-NETPR`
+- `PurchaseOrderItemText` <= `EKPO-TXZ01`
+- `DeletionIndicator` <= `EKPO-LOEKZ`
+
+## 5. Comportement RAP
+
+### 5.1 Type de BO
+
+- BO root unmanaged avec draft
+- Lock master sur le header
+- Lock dependent sur les items
+- `total etag` porté par `CreationDate`
+
+### 5.2 Opérations déclarées
+
+Le comportement RAP déclare techniquement des opérations de modification et des actions draft.
+
+Pour la présente spécification, seule la partie suivante est considérée comme fonctionnelle et dans le périmètre :
+
+- lecture header
+- lecture item
+- association `_Items`
+- association `_Header`
+
+### 5.3 Autorisations
+
+Le BO est déclaré avec :
+
+- `authorization master ( global, instance )` sur le header
+- `authorization dependent by _Header` sur l'item
+
+Dans l'état actuel du code, les méthodes d'autorisation ont été simplifiées pour ne pas bloquer la consommation et le diagnostic du service.
+
+## 6. Implémentation ABAP actuelle
+
+### 6.1 Classe de comportement
+
+L'implémentation se trouve dans [ZBP_I_PO.abap](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/abap/ZBP_I_PO.abap).
+
+### 6.2 Lecture
+
+Les opérations suivantes sont implémentées :
+
+- `read` header
+- `read` item
+- `rba_items`
+- `rba_header`
+
+Ces lectures s'appuient sur des `SELECT` directs sur `EKKO` et `EKPO`.
+
+## 7. Service OData
+
+### 7.1 Service definition
+
+Le service expose :
+
+- `PurchaseOrder`
+- `PurchaseOrderItem`
+
+Objet : [ZUI_PO.srvd](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvd)
+
+### 7.2 Service binding
+
+Le binding est de type :
+
+- `odatav4_ui`
+
+Objet : [ZUI_PO.srvb](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvb)
+
+## 8. Intégration Fiori Elements
+
+### 8.1 UI exposée
+
+La vue de consommation root [ZC_PO_LIST_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZC_PO_LIST_RAL.ddls) définit :
+
+- `@UI.headerInfo`
+- `@UI.lineItem`
+- `@UI.identification`
+- `@UI.facet`
+
+La vue item [ZC_PO_DETAIL_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZC_PO_DETAIL_RAL.ddls) définit également les annotations de détail.
+
+### 8.2 État actuel du preview
+
+Le preview Fiori Elements affiche correctement :
+
+- la liste des Purchase Orders
+- la navigation vers les items
+- les lectures OData
+
+Le présent document ne couvre que ce périmètre de consultation.
+
+## 9. Contraintes techniques connues
+
+### 9.1 Compatibilité release RAP
+
+Le code a été ajusté pour une release RAP stricte avec plusieurs contraintes :
+
+- signatures `READ BY ASSOCIATION` explicites
+- clés `readonly` dans la BDEF
+- suppression des usages non disponibles dans certaines releases (`COMMIT WORK`, API de message non compatibles)
+
+### 9.2 Autorisations
+
+Les helpers d'autorisation existent dans le code, mais la logique active a été simplifiée temporairement pour éviter de bloquer la consommation et le diagnostic du service.
+
+## 10. Ce qui fonctionne aujourd'hui
+
+- Activation de la majorité des objets RAP du dépôt
+- Lecture header
+- Lecture item
+- Associations `_Items` et `_Header`
+- Draft déclaré dans la BDEF
+- Service OData V4 consommable
+- Preview Fiori Elements orienté consultation
+
+## 11. Limites actuelles
+
+- Les opérations de modification ne font pas partie du périmètre fonctionnel documenté ici
+- La documentation présente uniquement la consommation de données
+- Les parties BAPI et save unmanaged ne sont pas retenues comme usage validé pour l'instant
+
+## 12. Recommandations
+
+### 12.1 Pour continuer sur cette base
+
+- conserver l'approche **unmanaged**
+- republier systématiquement le service binding après changement de BDEF/projection
+- vérifier le `$metadata` pour l'exposition correcte des entités et des associations
+
+### 12.2 Pour industrialiser le BO
+
+- stabiliser séparément le périmètre de modification avant de le documenter comme fonctionnel
+- réintroduire un vrai contrôle d'autorisation PFCG
+- valider le comportement Fiori Elements sur metadata publiée et non uniquement en preview
+
+## 13. Étapes à suivre
+
+### 13.1 Ordre d'activation recommandé dans ADT
+
+Pour éviter les faux positifs et les erreurs de dépendance, activer dans l'ordre suivant :
+
+1. CDS interface
+
+- [ZI_PO_HEADER_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZI_PO_HEADER_RAL.ddls)
+- [ZI_PO_ITEM_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZI_PO_ITEM_RAL.ddls)
+
+2. CDS consommation
+
+- [ZC_PO_LIST_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZC_PO_LIST_RAL.ddls)
+- [ZC_PO_DETAIL_RAL.ddls](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/cds/ZC_PO_DETAIL_RAL.ddls)
+
+3. Behavior definitions
+
+- [ZI_PO_HEADER_RAL.bdef](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/behavior/ZI_PO_HEADER_RAL.bdef)
+- [ZC_PO_LIST_RAL.bdef](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/behavior/ZC_PO_LIST_RAL.bdef)
+
+4. Behavior pool
+
+- [ZBP_I_PO.abap](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/abap/ZBP_I_PO.abap)
+
+5. Service
+
+- [ZUI_PO.srvd](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvd)
+- [ZUI_PO.srvb](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvb)
+
+### 13.2 Publication du service
+
+Après toute modification de BDEF, projection behavior ou CDS de consommation :
+
+1. Ouvrir [ZUI_PO.srvb](/home/ralobo/step-cds-fiori/step-by-step-SAP/ZPO_SMART_COCKPIT/service/ZUI_PO.srvb)
+2. Faire `Publish` ou `Republish`
+3. Ouvrir l'aperçu de l'entité racine `PurchaseOrder`
+4. Faire un `Ctrl+F5` dans le navigateur
+
+### 13.3 Vérification du metadata OData
+
+Dans le `$metadata`, vérifier la présence des éléments suivants sur `PurchaseOrder` :
+
+- `Common.DraftRoot`
+- définition de l'entité `PurchaseOrder`
+- définition de l'entité `PurchaseOrderItem`
+- associations `_Items` et `_Header`
+
+### 13.4 Tests fonctionnels minimaux
+
+#### Test 1 : lecture header
+
+Valider que la liste s'affiche avec au minimum :
+
+- `PurchaseOrder`
+- `CompanyCode`
+- `Supplier`
+- `PurchaseOrderTypeCode`
+- `PurchaseOrderDate`
+
+#### Test 2 : navigation header -> items
+
+Depuis un Purchase Order existant, ouvrir le détail et vérifier l'affichage des items.
+
+#### Test 3 : navigation item -> header
+
+Depuis un item, vérifier que l'association `_Header` résout correctement l'en-tête.
+
+#### Test 4 : draft metadata
+
+Vérifier que le service publié expose bien le draft sur l'entité racine.
