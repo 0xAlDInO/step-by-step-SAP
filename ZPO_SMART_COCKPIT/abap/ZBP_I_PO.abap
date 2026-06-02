@@ -1,200 +1,377 @@
-CLASS zbp_i_po DEFINITION PUBLIC FINAL CREATE PUBLIC.
-  PUBLIC SECTION.
-    TYPES: BEGIN OF ty_po_header,
-             ebeln TYPE ekko-ebeln,
-             bukrs TYPE ekko-bukrs,
-             lifnr TYPE ekko-lifnr,
-             bsart TYPE ekko-bsart,
-             bedat TYPE ekko-bedat,
-             waers TYPE ekko-waers,
-             netwr TYPE ekko-netwr,
-             aedat TYPE ekko-aedat,
-           END OF ty_po_header.
-
-    TYPES: BEGIN OF ty_po_item,
-             ebeln TYPE ekpo-ebeln,
-             ebelp TYPE ekpo-ebelp,
-             matnr TYPE ekpo-matnr,
-             werks TYPE ekpo-werks,
-             menge TYPE ekpo-menge,
-             meins TYPE ekpo-meins,
-             netpr TYPE ekpo-netpr,
-             txz01 TYPE ekpo-txz01,
-           END OF ty_po_item.
-
-    TYPES: ty_po_header_tab TYPE STANDARD TABLE OF ty_po_header WITH DEFAULT KEY.
-    TYPES: ty_po_item_tab   TYPE STANDARD TABLE OF ty_po_item   WITH DEFAULT KEY.
-
-    METHODS create
-      IMPORTING
-        !it_header TYPE ty_po_header_tab
-        !it_items  TYPE ty_po_item_tab
-      EXPORTING
-        !ev_ebeln  TYPE ekko-ebeln.
-
-    METHODS update
-      IMPORTING
-        !it_header TYPE ty_po_header_tab
-        !it_items  TYPE ty_po_item_tab.
-
-    METHODS delete
-      IMPORTING
-        !it_header TYPE ty_po_header_tab.
-
-  PRIVATE SECTION.
-    METHODS bapi_create_po
-      IMPORTING
-        !is_header TYPE ty_po_header
-        !it_items  TYPE ty_po_item_tab
-      RETURNING
-        VALUE(rv_ebeln) TYPE ekko-ebeln.
-    METHODS bapi_update_po
-      IMPORTING
-        !is_header TYPE ty_po_header
-        !it_items  TYPE ty_po_item_tab.
-    METHODS raise_bapi_error
-      IMPORTING
-        !it_return TYPE TABLE OF bapiret2.
+CLASS zbp_i_po DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_po_header_ral.
 ENDCLASS.
 
 CLASS zbp_i_po IMPLEMENTATION.
-  METHOD create.
-    DATA(ls_header) TYPE ty_po_header.
-    READ TABLE it_header INDEX 1 INTO ls_header.
-    IF ls_header IS INITIAL.
-      MESSAGE 'Purchase order header is required for create.' TYPE 'E'.
+ENDCLASS.
+
+**********************************************************************
+* LOCAL DEFINITIONS
+**********************************************************************
+
+CLASS lcl_buffer DEFINITION.
+  PUBLIC SECTION.
+    TYPES: BEGIN OF ty_po_buffer,
+             cid    TYPE abp_behv_cid,
+             header TYPE zi_po_header_ral,
+             items  TYPE TABLE OF zi_po_item_ral WITH EMPTY KEY,
+             action TYPE char1, " C: Create, U: Update, D: Delete
+           END OF ty_po_buffer.
+    CLASS-DATA: mt_buffer TYPE TABLE OF ty_po_buffer WITH EMPTY KEY.
+ENDCLASS.
+
+CLASS lhc_purchaseorder DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+    METHODS is_activity_globally_allowed
+      IMPORTING iv_actvt TYPE activ_auth
+      RETURNING VALUE(rv_allowed) TYPE abap_bool.
+    METHODS is_header_activity_allowed
+      IMPORTING
+        iv_actvt  TYPE activ_auth
+        is_header TYPE zi_po_header_ral
+      RETURNING VALUE(rv_allowed) TYPE abap_bool.
+    METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
+      IMPORTING REQUEST requested_authorizations FOR PurchaseOrder RESULT result.
+    METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
+      IMPORTING keys FOR PurchaseOrder RESULT result.
+    METHODS create FOR MODIFY IMPORTING entities FOR CREATE PurchaseOrder.
+    METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrder.
+    METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrder.
+    METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrder RESULT result.
+    METHODS lock FOR LOCK IMPORTING keys FOR LOCK PurchaseOrder.
+<<<<<<< HEAD
+    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items RESULT result LINK link.
+=======
+    METHODS rba_items FOR READ IMPORTING keys_rba FOR READ PurchaseOrder\_Items FULL result_requested RESULT result LINK link.
+>>>>>>> 3a4f64e (fix error class)
+    METHODS cba_items FOR MODIFY IMPORTING entities_cba FOR CREATE PurchaseOrder\_Items.
+ENDCLASS.
+
+CLASS lhc_purchaseorderitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+    METHODS update FOR MODIFY IMPORTING entities FOR UPDATE PurchaseOrderItem.
+    METHODS delete FOR MODIFY IMPORTING keys FOR DELETE PurchaseOrderItem.
+    METHODS read FOR READ IMPORTING keys FOR READ PurchaseOrderItem RESULT result.
+    METHODS rba_header FOR READ IMPORTING keys_rba FOR READ PurchaseOrderItem\_Header FULL result_requested RESULT result LINK link.
+ENDCLASS.
+
+CLASS lsc_zi_po_header DEFINITION INHERITING FROM cl_abap_behavior_saver.
+  PROTECTED SECTION.
+    METHODS save REDEFINITION.
+    METHODS finalize REDEFINITION.
+    METHODS check_before_save REDEFINITION.
+ENDCLASS.
+
+**********************************************************************
+* LOCAL IMPLEMENTATIONS
+**********************************************************************
+
+CLASS lhc_purchaseorder IMPLEMENTATION.
+  METHOD is_activity_globally_allowed.
+    rv_allowed = abap_true.
+
+    AUTHORITY-CHECK OBJECT 'M_BEST_BSA'
+      ID 'ACTVT' FIELD iv_actvt
+      ID 'BSART' DUMMY.
+    IF sy-subrc <> 0.
+      rv_allowed = abap_false.
+      RETURN.
     ENDIF.
-    ev_ebeln = bapi_create_po( is_header = ls_header it_items = it_items ).
+
+    AUTHORITY-CHECK OBJECT 'M_BEST_EKO'
+      ID 'ACTVT' FIELD iv_actvt
+      ID 'EKORG' DUMMY.
+    IF sy-subrc <> 0.
+      rv_allowed = abap_false.
+      RETURN.
+    ENDIF.
+
+    AUTHORITY-CHECK OBJECT 'M_BEST_EKG'
+      ID 'ACTVT' FIELD iv_actvt
+      ID 'EKGRP' DUMMY.
+    IF sy-subrc <> 0.
+      rv_allowed = abap_false.
+      RETURN.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD is_header_activity_allowed.
+    rv_allowed = abap_true.
+
+    AUTHORITY-CHECK OBJECT 'M_BEST_BSA'
+      ID 'ACTVT' FIELD iv_actvt
+      ID 'BSART' FIELD is_header-PurchaseOrderTypeCode.
+    IF sy-subrc <> 0.
+      rv_allowed = abap_false.
+      RETURN.
+    ENDIF.
+
+    AUTHORITY-CHECK OBJECT 'M_BEST_EKO'
+      ID 'ACTVT' FIELD iv_actvt
+      ID 'EKORG' FIELD is_header-PurchasingOrganization.
+    IF sy-subrc <> 0.
+      rv_allowed = abap_false.
+      RETURN.
+    ENDIF.
+
+    AUTHORITY-CHECK OBJECT 'M_BEST_EKG'
+      ID 'ACTVT' FIELD iv_actvt
+      ID 'EKGRP' FIELD is_header-PurchasingGroup.
+    IF sy-subrc <> 0.
+      rv_allowed = abap_false.
+      RETURN.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD get_global_authorizations.
+    IF requested_authorizations-%create = if_abap_behv=>mk-on.
+      result-%create = if_abap_behv=>auth-allowed.
+    ENDIF.
+
+    " Edit in draft scenarios is checked like update
+    IF requested_authorizations-%update = if_abap_behv=>mk-on
+      OR requested_authorizations-%action-Edit = if_abap_behv=>mk-on.
+      IF requested_authorizations-%update = if_abap_behv=>mk-on.
+        result-%update = if_abap_behv=>auth-allowed.
+      ENDIF.
+
+      IF requested_authorizations-%action-Edit = if_abap_behv=>mk-on.
+        result-%action-Edit = if_abap_behv=>auth-allowed.
+      ENDIF.
+    ENDIF.
+
+    IF requested_authorizations-%delete = if_abap_behv=>mk-on.
+      result-%delete = if_abap_behv=>auth-allowed.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
+    IF keys IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    SELECT FROM ekko
+      FIELDS
+        ebeln AS PurchaseOrder,
+        bsart AS PurchaseOrderTypeCode,
+        ekorg AS PurchasingOrganization,
+        ekgrp AS PurchasingGroup
+      FOR ALL ENTRIES IN @keys
+      WHERE ebeln = @keys-PurchaseOrder
+      INTO TABLE @DATA(lt_headers).
+
+    LOOP AT keys INTO DATA(ls_key).
+      READ TABLE lt_headers
+        WITH KEY PurchaseOrder = ls_key-PurchaseOrder
+        INTO DATA(ls_header).
+
+      DATA ls_result LIKE LINE OF result.
+
+      IF requested_authorizations-%update = if_abap_behv=>mk-on.
+        ls_result-%update = if_abap_behv=>auth-allowed.
+      ENDIF.
+
+      IF requested_authorizations-%delete = if_abap_behv=>mk-on.
+        ls_result-%delete = if_abap_behv=>auth-allowed.
+      ENDIF.
+
+      IF requested_authorizations-%action-Edit = if_abap_behv=>mk-on.
+        ls_result-%action-Edit = if_abap_behv=>auth-allowed.
+      ENDIF.
+
+      ls_result-PurchaseOrder = ls_key-PurchaseOrder.
+      APPEND ls_result TO result.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD create.
+    LOOP AT entities INTO DATA(ls_entity).
+      INSERT VALUE #( cid = ls_entity-%cid header = CORRESPONDING #( ls_entity ) action = 'C' ) INTO TABLE lcl_buffer=>mt_buffer.
+      INSERT VALUE #( %cid = ls_entity-%cid
+                      PurchaseOrder = ls_entity-PurchaseOrder ) INTO TABLE mapped-purchaseorder.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD update.
-    DATA(ls_header) TYPE ty_po_header.
-    READ TABLE it_header INDEX 1 INTO ls_header.
-    IF ls_header IS INITIAL.
-      MESSAGE 'Purchase order header is required for update.' TYPE 'E'.
-    ENDIF.
-    bapi_update_po( is_header = ls_header it_items = it_items ).
+    LOOP AT entities INTO DATA(ls_entity).
+      INSERT VALUE #( header = CORRESPONDING #( ls_entity ) action = 'U' ) INTO TABLE lcl_buffer=>mt_buffer.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD delete.
-    " Soft delete not supported for Purchase Orders in standard SAP.
-    MESSAGE 'Delete is not supported for Purchase Orders. Use cancellation processes instead.' TYPE 'W'.
-  ENDMETHOD.
-
-  METHOD bapi_create_po.
-    DATA: ls_bapi_header TYPE bapiekko,
-          lt_bapi_items  TYPE TABLE OF bapiekpo,
-          lt_return      TYPE TABLE OF bapiret2,
-          ls_item        TYPE ty_po_item,
-          ls_bapi_item   TYPE bapiekpo,
-          lv_po_number   TYPE ekko-ebeln.
-
-    " Laisser SAP générer le numéro de PO automatiquement.
-    " Ne pas remplir po_number pour éviter les incohérences de numérotation.
-    ls_bapi_header-vendor    = is_header-lifnr.
-    ls_bapi_header-doc_type  = is_header-bsart.
-    ls_bapi_header-company_code = is_header-bukrs.
-    ls_bapi_header-currency  = is_header-waers.
-    ls_bapi_header-doc_date  = is_header-bedat.
-
-    LOOP AT it_items INTO ls_item.
-      CLEAR ls_bapi_item.
-      ls_bapi_item-po_item   = ls_item-ebelp.
-      ls_bapi_item-material  = ls_item-matnr.
-      ls_bapi_item-plant     = ls_item-werks.
-      ls_bapi_item-quantity  = ls_item-menge.
-      ls_bapi_item-qty_unit  = ls_item-meins.
-      ls_bapi_item-net_price = ls_item-netpr.
-      ls_bapi_item-short_text = ls_item-txz01.
-      APPEND ls_bapi_item TO lt_bapi_items.
+    LOOP AT keys INTO DATA(ls_key).
+      INSERT VALUE #( header = VALUE #( PurchaseOrder = ls_key-PurchaseOrder ) action = 'D' ) INTO TABLE lcl_buffer=>mt_buffer.
     ENDLOOP.
-
-    CALL FUNCTION 'BAPI_PO_CREATE1'
-      EXPORTING
-        poheader      = ls_bapi_header
-      IMPORTING
-        purchaseorder = lv_po_number
-      TABLES
-        poitem        = lt_bapi_items
-        return        = lt_return.
-
-    raise_bapi_error( it_return = lt_return ).
-
-    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
-      EXPORTING
-        wait = 'X'.
   ENDMETHOD.
 
-  METHOD bapi_update_po.
-    DATA: ls_bapi_header TYPE bapiekko,
-          ls_bapi_headerx TYPE bapiekkox,
-          lt_bapi_items  TYPE TABLE OF bapiekpo,
-          lt_bapi_itemsx TYPE TABLE OF bapiekpox,
-          lt_return      TYPE TABLE OF bapiret2,
-          ls_item        TYPE ty_po_item,
-          ls_bapi_item   TYPE bapiekpo,
-          ls_bapi_itemx  TYPE bapiekpox.
-
-    " Header data
-    ls_bapi_header-po_number = is_header-ebeln.
-    ls_bapi_header-vendor    = is_header-lifnr.
-    ls_bapi_header-doc_type  = is_header-bsart.
-    ls_bapi_header-company_code = is_header-bukrs.
-    ls_bapi_header-currency  = is_header-waers.
-    ls_bapi_header-doc_date  = is_header-bedat.
-
-    " Header change indicators
-    ls_bapi_headerx-po_number = is_header-ebeln.
-    ls_bapi_headerx-vendor    = 'X'.
-    ls_bapi_headerx-doc_type  = 'X'.
-    ls_bapi_headerx-company_code = 'X'.
-    ls_bapi_headerx-currency  = 'X'.
-    ls_bapi_headerx-doc_date  = 'X'.
-
-    " Items data
-    LOOP AT it_items INTO ls_item.
-      CLEAR: ls_bapi_item, ls_bapi_itemx.
-      ls_bapi_item-po_item   = ls_item-ebelp.
-      ls_bapi_item-material  = ls_item-matnr.
-      ls_bapi_item-plant     = ls_item-werks.
-      ls_bapi_item-quantity  = ls_item-menge.
-      ls_bapi_item-qty_unit  = ls_item-meins.
-      ls_bapi_item-net_price = ls_item-netpr.
-      ls_bapi_item-short_text = ls_item-txz01.
-      APPEND ls_bapi_item TO lt_bapi_items.
-
-      ls_bapi_itemx-po_item   = ls_item-ebelp.
-      ls_bapi_itemx-material  = 'X'.
-      ls_bapi_itemx-plant     = 'X'.
-      ls_bapi_itemx-quantity  = 'X'.
-      ls_bapi_itemx-qty_unit  = 'X'.
-      ls_bapi_itemx-net_price = 'X'.
-      ls_bapi_itemx-short_text = 'X'.
-      APPEND ls_bapi_itemx TO lt_bapi_itemsx.
-    ENDLOOP.
-
-    CALL FUNCTION 'BAPI_PO_CHANGE'
-      EXPORTING
-        purchaseorder = is_header-ebeln
-        poheader      = ls_bapi_header
-        poheaderx     = ls_bapi_headerx
-      TABLES
-        poitem        = lt_bapi_items
-        poitemx       = lt_bapi_itemsx
-        return        = lt_return.
-
-    raise_bapi_error( it_return = lt_return ).
-
-    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
-      EXPORTING
-        wait = 'X'.
+  METHOD read.
+    IF keys IS NOT INITIAL.
+      SELECT * FROM ekko FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder INTO TABLE @DATA(lt_po).
+      result = CORRESPONDING #( lt_po MAPPING
+        PurchaseOrder = ebeln
+        CompanyCode = bukrs
+        Supplier = lifnr
+        PurchaseOrderTypeCode = bsart
+        PurchasingOrganization = ekorg
+        PurchasingGroup = ekgrp
+        PurchaseOrderDate = bedat
+        Currency = waers
+        CreationDate = aedat
+        DeletionIndicator = loekz ).
+    ENDIF.
   ENDMETHOD.
 
-  METHOD raise_bapi_error.
-    LOOP AT it_return INTO DATA(ls_return).
-      IF ls_return-type CA 'AE'.
-        MESSAGE ls_return-message TYPE 'E'.
+  METHOD lock.
+    LOOP AT keys INTO DATA(ls_key).
+      CALL FUNCTION 'ENQUEUE_EMEKKOE'
+        EXPORTING ebeln = ls_key-PurchaseOrder
+        EXCEPTIONS foreign_lock = 1 system_failure = 2 OTHERS = 3.
+      IF sy-subrc <> 0.
+        APPEND VALUE #( PurchaseOrder = ls_key-PurchaseOrder ) TO failed-purchaseorder.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
+
+  METHOD rba_items.
+    IF keys_rba IS NOT INITIAL.
+      SELECT * FROM ekpo FOR ALL ENTRIES IN @keys_rba
+        WHERE ebeln = @keys_rba-PurchaseOrder
+        INTO TABLE @DATA(lt_items).
+
+      LOOP AT keys_rba INTO DATA(ls_key).
+        LOOP AT lt_items INTO DATA(ls_item) WHERE ebeln = ls_key-PurchaseOrder.
+          APPEND CORRESPONDING #(
+            ls_item MAPPING
+              PurchaseOrder = ebeln
+              PurchaseOrderItem = ebelp
+              Material = matnr
+              Plant = werks
+              PurchaseOrderQuantity = menge
+              PurchaseOrderQuantityUnit = meins
+              NetPrice = netpr
+              PurchaseOrderItemText = txz01
+              DeletionIndicator = loekz ) TO result.
+          IF link IS SUPPLIED.
+            APPEND VALUE #( source-PurchaseOrder = ls_key-PurchaseOrder
+                            target-PurchaseOrder = ls_item-ebeln
+                            target-PurchaseOrderItem = ls_item-ebelp ) TO link.
+          ENDIF.
+        ENDLOOP.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD cba_items.
+    LOOP AT entities_cba INTO DATA(ls_cba).
+      READ TABLE lcl_buffer=>mt_buffer WITH KEY cid = ls_cba-%cid_ref REFERENCE INTO DATA(lr_buffer).
+      IF sy-subrc <> 0.
+         READ TABLE lcl_buffer=>mt_buffer WITH KEY header-PurchaseOrder = ls_cba-PurchaseOrder REFERENCE INTO lr_buffer.
+      ENDIF.
+      IF lr_buffer IS BOUND.
+        LOOP AT ls_cba-%target INTO DATA(ls_target).
+          INSERT CORRESPONDING #( ls_target ) INTO TABLE lr_buffer->items.
+        ENDLOOP.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS lhc_purchaseorderitem IMPLEMENTATION.
+  METHOD update. ENDMETHOD.
+  METHOD delete. ENDMETHOD.
+  METHOD read.
+    IF keys IS NOT INITIAL.
+      SELECT * FROM ekpo FOR ALL ENTRIES IN @keys WHERE ebeln = @keys-PurchaseOrder AND ebelp = @keys-PurchaseOrderItem INTO TABLE @DATA(lt_item).
+      result = CORRESPONDING #( lt_item MAPPING
+        PurchaseOrder = ebeln
+        PurchaseOrderItem = ebelp
+        Material = matnr
+        Plant = werks
+        PurchaseOrderQuantity = menge
+        PurchaseOrderQuantityUnit = meins
+        NetPrice = netpr
+        PurchaseOrderItemText = txz01
+        DeletionIndicator = loekz ).
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD rba_header.
+    IF keys_rba IS NOT INITIAL.
+      SELECT * FROM ekko
+        FOR ALL ENTRIES IN @keys_rba
+        WHERE ebeln = @keys_rba-PurchaseOrder
+        INTO TABLE @DATA(lt_header).
+
+      LOOP AT keys_rba INTO DATA(ls_key).
+        LOOP AT lt_header INTO DATA(ls_header) WHERE ebeln = ls_key-PurchaseOrder.
+          APPEND CORRESPONDING #(
+            ls_header MAPPING
+              PurchaseOrder = ebeln
+              CompanyCode = bukrs
+              Supplier = lifnr
+              PurchaseOrderTypeCode = bsart
+              PurchasingOrganization = ekorg
+              PurchasingGroup = ekgrp
+              PurchaseOrderDate = bedat
+              Currency = waers
+              CreationDate = aedat
+              DeletionIndicator = loekz ) TO result.
+          IF link IS SUPPLIED.
+            APPEND VALUE #(
+              source-PurchaseOrder     = ls_key-PurchaseOrder
+              source-PurchaseOrderItem = ls_key-PurchaseOrderItem
+              target-PurchaseOrder     = ls_header-ebeln ) TO link.
+          ENDIF.
+        ENDLOOP.
+      ENDLOOP.
+    ENDIF.
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS lsc_zi_po_header IMPLEMENTATION.
+  METHOD save.
+    DATA: ls_header  TYPE bapimepoheader,
+          ls_headerx TYPE bapimepoheaderx,
+          lt_items   TYPE TABLE OF bapimepoitem,
+          lt_itemsx  TYPE TABLE OF bapimepoitemx,
+          lt_return  TYPE TABLE OF bapiret2,
+          lv_po      TYPE ebeln.
+
+    LOOP AT lcl_buffer=>mt_buffer INTO DATA(ls_buffer).
+      CLEAR: ls_header, ls_headerx, lt_items, lt_itemsx, lt_return, lv_po.
+      CASE ls_buffer-action.
+        WHEN 'C'.
+          ls_header = VALUE #( comp_code = ls_buffer-header-CompanyCode vendor = ls_buffer-header-Supplier
+                               doc_type = ls_buffer-header-PurchaseOrderTypeCode purch_org = ls_buffer-header-PurchasingOrganization
+                               pur_group = ls_buffer-header-PurchasingGroup currency = ls_buffer-header-Currency doc_date = ls_buffer-header-PurchaseOrderDate ).
+          ls_headerx = VALUE #( comp_code = 'X' vendor = 'X' doc_type = 'X' purch_org = 'X' pur_group = 'X' currency = 'X' doc_date = 'X' ).
+          LOOP AT ls_buffer-items INTO DATA(ls_item).
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem material = ls_item-Material plant = ls_item-Plant quantity = ls_item-PurchaseOrderQuantity po_unit = ls_item-PurchaseOrderQuantityUnit net_price = ls_item-NetPrice ) TO lt_items.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem material = 'X' plant = 'X' quantity = 'X' po_unit = 'X' net_price = 'X' ) TO lt_itemsx.
+          ENDLOOP.
+          CALL FUNCTION 'BAPI_PO_CREATE1' EXPORTING poheader = ls_header poheaderx = ls_headerx IMPORTING purchaseorder = lv_po TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
+        WHEN 'U'.
+          ls_header = VALUE #( comp_code = ls_buffer-header-CompanyCode vendor = ls_buffer-header-Supplier
+                               doc_type = ls_buffer-header-PurchaseOrderTypeCode purch_org = ls_buffer-header-PurchasingOrganization
+                               pur_group = ls_buffer-header-PurchasingGroup currency = ls_buffer-header-Currency doc_date = ls_buffer-header-PurchaseOrderDate ).
+          ls_headerx = VALUE #( comp_code = 'X' vendor = 'X' doc_type = 'X' purch_org = 'X' pur_group = 'X' currency = 'X' doc_date = 'X' ).
+          LOOP AT ls_buffer-items INTO ls_item.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem quantity = ls_item-PurchaseOrderQuantity net_price = ls_item-NetPrice ) TO lt_items.
+            APPEND VALUE #( po_item = ls_item-PurchaseOrderItem quantity = 'X' net_price = 'X' ) TO lt_itemsx.
+          ENDLOOP.
+          CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder poheader = ls_header poheaderx = ls_headerx TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
+        WHEN 'D'.
+          SELECT ebelp FROM ekpo WHERE ebeln = @ls_buffer-header-PurchaseOrder INTO TABLE @DATA(lt_existing).
+          LOOP AT lt_existing INTO DATA(lv_item).
+            APPEND VALUE #( po_item = lv_item delete_ind = 'X' ) TO lt_items.
+            APPEND VALUE #( po_item = lv_item delete_ind = 'X' ) TO lt_itemsx.
+          ENDLOOP.
+          CALL FUNCTION 'BAPI_PO_CHANGE' EXPORTING purchaseorder = ls_buffer-header-PurchaseOrder TABLES poitem = lt_items poitemx = lt_itemsx return = lt_return.
+      ENDCASE.
+
+    ENDLOOP.
+    CLEAR lcl_buffer=>mt_buffer.
+  ENDMETHOD.
+  METHOD finalize. ENDMETHOD.
+  METHOD check_before_save. ENDMETHOD.
 ENDCLASS.

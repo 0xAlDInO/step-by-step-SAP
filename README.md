@@ -43,6 +43,15 @@ Ordre recommandé :
 
 1. `ZI_PO_HEADER` (racine)
 2. `ZI_PO_ITEM` (enfant)
+
+> **IMPORTANT : Dépendance Circulaire**
+> Comme `ZI_PO_HEADER` définit une composition vers `ZI_PO_ITEM` et que `ZI_PO_ITEM` définit une association parent vers `ZI_PO_HEADER`, vous ne pouvez pas les activer individuellement.
+>
+> **Procédure d'activation :**
+> 1. Sauvegardez les deux fichiers.
+> 2. Sélectionnez les deux fichiers dans le Project Explorer d'ADT.
+> 3. Clic-droit > **Activate** (ou Ctrl+F3) pour une activation de masse.
+
 3. `ZC_PO_LIST` (liste)
 4. `ZC_PO_DETAIL` (détail)
 

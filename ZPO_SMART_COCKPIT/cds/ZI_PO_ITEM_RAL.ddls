@@ -1,0 +1,23 @@
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Interface View Purchase Order Item RAL'
+
+define view entity ZI_PO_ITEM_RAL
+  as select from ekpo
+  association to parent ZI_PO_HEADER_RAL as _Header on $projection.PurchaseOrder = _Header.PurchaseOrder
+  association [1..1] to ekko as _EKKO on $projection.PurchaseOrder = _EKKO.ebeln
+{
+  key ebeln as PurchaseOrder,
+  key ebelp as PurchaseOrderItem,
+      matnr as Material,
+      werks as Plant,
+      @Semantics.quantity.unitOfMeasure: 'PurchaseOrderQuantityUnit'
+      menge as PurchaseOrderQuantity,
+      meins as PurchaseOrderQuantityUnit,
+      @Semantics.amount.currencyCode: 'Currency'
+      netpr as NetPrice,
+      _EKKO.waers as Currency,
+      txz01 as PurchaseOrderItemText,
+      loekz as DeletionIndicator,
+
+      _Header
+}

@@ -1,0 +1,36 @@
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Purchase Order List RAL'
+@UI.headerInfo: { typeName: 'Purchase Order', typeNamePlural: 'Purchase Orders', title: { type: #STANDARD, value: 'PurchaseOrder' } }
+@Search.searchable: true
+
+define root view entity ZC_PO_LIST_RAL
+  provider contract transactional_query
+  as projection on ZI_PO_HEADER_RAL
+{
+      @UI.facet: [ { id: 'GeneralInfo', type: #IDENTIFICATION_REFERENCE, label: 'General Information', position: 10 } ]
+
+      @UI.lineItem: [ { position: 10 } ]
+      @UI.identification: [ { position: 10 } ]
+      @Search.defaultSearchElement: true
+  key PurchaseOrder,
+
+      @UI.lineItem: [ { position: 20 } ]
+      CompanyCode,
+
+      @UI.lineItem: [ { position: 30 } ]
+      Supplier,
+
+      @UI.lineItem: [ { position: 40 } ]
+      PurchaseOrderTypeCode,
+
+      @UI.lineItem: [ { position: 50 } ]
+      PurchaseOrderDate,
+
+      @UI.lineItem: [ { position: 60 } ]
+      Currency,
+
+      @UI.lineItem: [ { position: 80 } ]
+      CreationDate,
+
+      _Items : redirected to composition child ZC_PO_DETAIL_RAL
+}

@@ -1,0 +1,62 @@
+unmanaged implementation in class ZBP_I_PO unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZI_PO_HEADER_RAL alias PurchaseOrder
+draft table zpo_header_d
+lock master
+total etag CreationDate
+authorization master ( instance )
+{
+  create;
+  update;
+  delete;
+
+  association _Items { create; with draft; }
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ekko
+  {
+    PurchaseOrder = ebeln;
+    CompanyCode = bukrs;
+    Supplier = lifnr;
+    PurchaseOrderTypeCode = bsart;
+    PurchasingOrganization = ekorg;
+    PurchasingGroup = ekgrp;
+    PurchaseOrderDate = bedat;
+    Currency = waers;
+    CreationDate = aedat;
+    DeletionIndicator = loekz;
+  }
+}
+
+define behavior for ZI_PO_ITEM_RAL alias PurchaseOrderItem
+draft table zpo_item_d
+lock dependent by _Header
+authorization dependent by _Header
+{
+  update;
+  delete;
+
+  field ( readonly ) PurchaseOrder;
+
+  association _Header { with draft; }
+
+  mapping for ekpo
+  {
+    PurchaseOrder = ebeln;
+    PurchaseOrderItem = ebelp;
+    Material = matnr;
+    Plant = werks;
+    PurchaseOrderQuantity = menge;
+    PurchaseOrderQuantityUnit = meins;
+    NetPrice = netpr;
+    PurchaseOrderItemText = txz01;
+    DeletionIndicator = loekz;
+  }
+}
